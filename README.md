@@ -140,8 +140,13 @@ Kaden E, Kruggel F, and Alexander DC: Quantitative Mapping of the Per-Axon Diffu
 
 * Multi-compartment microscopic diffusion model
 
-Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment microscopic diffusion anisotropy imaging brought into clinical practice. In: Proceedings of the 24th Annual Meeting of the International Society for Magnetic Resonance in Medicine, p. 1078, 2016.
+Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment microscopic diffusion imaging. NeuroImage, 2016. DOI: [10.1016/j.neuroimage.2016.06.002](http://dx.doi.org/10.1016/j.neuroimage.2016.06.002)
 <!-- Bibtex entry? -->
+
+## Supplementary material
+
+* [ISMRM 2016 slides](doc/KadenISMRM2016.pdf)
+* [OHBM 2016 poster](doc/KadenOHBM2016.pdf)
 
 ## License
 
