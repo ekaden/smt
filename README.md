@@ -140,7 +140,7 @@ Kaden E, Kruggel F, and Alexander DC: Quantitative Mapping of the Per-Axon Diffu
 
 * Multi-compartment microscopic diffusion model
 
-Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment microscopic diffusion imaging. NeuroImage, 2016. DOI: [10.1016/j.neuroimage.2016.06.002](http://dx.doi.org/10.1016/j.neuroimage.2016.06.002)
+Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment microscopic diffusion imaging. NeuroImage, vol. 139, pp. 346–359, 2016. DOI: [10.1016/j.neuroimage.2016.06.002](http://dx.doi.org/10.1016/j.neuroimage.2016.06.002)
 <!-- Bibtex entry? -->
 
 ## Supplementary material

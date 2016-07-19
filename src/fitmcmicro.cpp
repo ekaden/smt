@@ -73,9 +73,9 @@ MULTI-COMPARTMENT MICROSCOPIC DIFFUSION IMAGING (SPHERICAL MEAN TECHNIQUE)
 Copyright (c) 2016 Enrico Kaden & University College London
 
 If you use this software, please cite:
-  Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC:
-  Multi-compartment microscopic diffusion imaging. NeuroImage, 2016.
-  http://dx.doi.org/10.1016/j.neuroimage.2016.06.002
+  Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-
+  compartment microscopic diffusion imaging. NeuroImage, 139:346–359,
+  2016.  http://dx.doi.org/10.1016/j.neuroimage.2016.06.002
 
 Usage:
   fitmcmicro [options] <input> <output>
