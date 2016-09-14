@@ -145,8 +145,8 @@ Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment micros
 
 ## Supplementary material
 
-* [ISMRM 2016 slides](doc/KadenISMRM2016.pdf)
-* [OHBM 2016 poster](doc/KadenOHBM2016.pdf)
+* [ISMRM 2016 slides](docs/pdf/KadenISMRM2016.pdf)
+* [OHBM 2016 poster](docs/pdf/KadenOHBM2016.pdf)
 
 ## License
 
