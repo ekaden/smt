@@ -476,7 +476,7 @@ struct indexable_traits<sarray<T, S0, S1>> {
 };
 
 template <typename T, unsigned int S0, unsigned int S1>
-sarray<T, S0> mvProduct(const sarray<T, S0, S1>& A, const sarray<T, S1>& x) {
+sarray<T, S0> gemv(const sarray<T, S0, S1>& A, const sarray<T, S1>& x) {
 	sarray<T, S0> y = 0;
 	for(unsigned int ii = 0; ii < A.size(0); ++ii) {
 		for(unsigned int jj = 0; jj < A.size(1); ++jj) {
@@ -488,7 +488,7 @@ sarray<T, S0> mvProduct(const sarray<T, S0, S1>& A, const sarray<T, S1>& x) {
 }
 
 template <typename T, unsigned int S0>
-T scalarProduct(const sarray<T, S0>& x, const sarray<T, S0>& y) {
+T dot(const sarray<T, S0>& x, const sarray<T, S0>& y) {
 	T ret = 0;
 	for(unsigned int ii = 0; ii < x.size(0); ++ii) {
 		ret += x(ii)*y(ii);
@@ -522,6 +522,16 @@ T normInf(const sarray<T, S0>& x) {
 	T ret = 0;
 	for(std::size_t ii = 0; ii < S0; ++ii) {
 		ret = std::max(ret, std::abs(x(ii)));
+	}
+
+	return ret;
+}
+
+template <typename T, unsigned int S0, unsigned int S1>
+sarray<T, S0, S1> eye() {
+	sarray<T, S0, S1> ret = 0;
+	for(std::size_t ii = 0; ii < std::min(S0, S1); ++ii) {
+		ret(ii, ii) = T(1);
 	}
 
 	return ret;

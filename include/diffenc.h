@@ -55,7 +55,7 @@ public:
 
 // TODO: Explicit normalisation?
 //		for(std::size_t ii = 0; ii < bvalues.size(0); ++ii) {
-//			const float_t norm_tmp_pow2 = smt::scalarProduct(gradients(ii), gradients(ii));
+//			const float_t norm_tmp_pow2 = smt::dot(gradients(ii), gradients(ii));
 //			bvalues(ii) *= norm_tmp_pow2;
 //			if(norm_tmp_pow2 == float_t(0)) {
 //				gradients(ii) = 0;
@@ -71,8 +71,8 @@ public:
 		graddev(2, 2) += float_t(1);
 
 		for(std::size_t ii = 0; ii < bvalues.size(0); ++ii) {
-			const smt::sarray<float_t, 3> tmp = smt::mvProduct(graddev, gradients(ii));
-			const float_t norm_tmp_pow2 = smt::scalarProduct(tmp, tmp);
+			const smt::sarray<float_t, 3> tmp = smt::gemv(graddev, gradients(ii));
+			const float_t norm_tmp_pow2 = smt::dot(tmp, tmp);
 			bvalues(ii) *= norm_tmp_pow2;
 			if(norm_tmp_pow2 == float_t(0)) {
 				gradients(ii) = 0;

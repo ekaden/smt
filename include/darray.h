@@ -572,7 +572,7 @@ struct indexable_traits<darray<T, D>> {
 };
 
 template <typename T>
-darray<T, 1> mvProduct(const darray<T, 2>& A, const darray<T, 1>& x) {
+darray<T, 1> gemv(const darray<T, 2>& A, const darray<T, 1>& x) {
 	darray<T, 1> y(A.size(0));
 	y = 0;
 	for(unsigned int ii = 0; ii < A.size(0); ++ii) {
@@ -585,7 +585,7 @@ darray<T, 1> mvProduct(const darray<T, 2>& A, const darray<T, 1>& x) {
 }
 
 template <typename T>
-T scalarProduct(const darray<T, 1>& x, const darray<T, 1>& y) {
+T dot(const darray<T, 1>& x, const darray<T, 1>& y) {
 	T ret = 0;
 	for(unsigned int ii = 0; ii < x.size(0); ++ii) {
 		ret += x(ii)*y(ii);
@@ -619,6 +619,17 @@ T normInf(const darray<T, 1>& x) {
 	T ret = 0;
 	for(std::size_t ii = 0; ii < x.size(0); ++ii) {
 		ret = std::max(ret, std::abs(x(ii)));
+	}
+
+	return ret;
+}
+
+template <typename T>
+darray<T, 2> eye(const std::size_t& s0, const std::size_t& s1) {
+	darray<T, 2> ret(s0, s1);
+	ret = 0;
+	for(std::size_t ii = 0; ii < std::min(s0, s1); ++ii) {
+		ret(ii, ii) = T(1);
 	}
 
 	return ret;
