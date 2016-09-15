@@ -64,7 +64,7 @@ fitmicrodt --version
 
 * `--bvecs <bvecs>` –– Diffusion gradient directions, given in FSL format
 
-* `--grads <grads>` -- Diffusion gradients (s/mm²), given in MRtrix format
+* `--grads <grads>` –– Diffusion gradients (s/mm²), given in MRtrix format
 
 * `--graddev <graddev>` –– Diffusion gradient deviation [default: none], provided as NIfTI-1 tensor volume
 
@@ -110,7 +110,7 @@ fitmcmicro --version
 
 * `--bvecs <bvecs>` –– Diffusion gradient directions, given in FSL format
 
-* `--grads <grads>` -- Diffusion gradients (s/mm²), given in MRtrix format
+* `--grads <grads>` –– Diffusion gradients (s/mm²), given in MRtrix format
 
 * `--graddev <graddev>` –– Diffusion gradient deviation [default: none], provided as NIfTI-1 tensor volume
 
