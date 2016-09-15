@@ -39,7 +39,7 @@
 	}
 #else
 #define insist(test) if(! (test)) { \
-		std::cerr << __FILE__ << "(" << __LINE__ << "): Insistence \"" \
+		std::cerr << __FILE__ << ":" << __LINE__ << ": In function ‘" << __PRETTY_FUNCTION__ << "’: Insistence \"" \
 				<< #test \
 				<< "\" failed." << std::endl; \
 		std::exit(EXIT_FAILURE); \
@@ -51,7 +51,7 @@
 #define remark(message)
 #else
 #define remark(message) { \
-		std::clog << __FILE__ << "(" << __LINE__ << "): " \
+		std::clog << __FILE__ << ":" << __LINE__ << ": In function ‘" << __PRETTY_FUNCTION__ << "’: " \
 				<< message \
 				<< std::endl; \
 	}
