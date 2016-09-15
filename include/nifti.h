@@ -245,6 +245,17 @@ public:
 
 		return ret;
 	}
+	
+	smt::darray<T, 1> operator()(const std::size_t& i0, const std::size_t& i1, const std::size_t& i2, const smt::slice& slice) const {
+		static_assert(D == 4, "D == 4");
+		smt::darray<T, 1> ret(slice.size());
+		std::size_t i3 = slice.start();
+		for(std::size_t ii = 0; ii < ret.size(); ++ii) {
+			ret(ii) = operator()(i0, i1, i2, i3);
+			i3 += slice.stride();
+		}
+		return ret;
+	}
 
 	std::size_t size() const {
 		std::size_t total_size = 1;

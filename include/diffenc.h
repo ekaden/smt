@@ -28,13 +28,18 @@
 #define _DIFFENC_H
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <deque>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+#include <limits>
+#include <numeric>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 #include "darray.h"
 #include "sarray.h"
@@ -42,58 +47,123 @@
 namespace smt {
 
 template <typename float_t>
-class diffenc_t {
+class diffenc {
 public:
-	smt::darray<float_t, 1> bvalues;
-	smt::darray<smt::sarray<float_t, 3>, 1> gradients;
-	smt::darray<std::size_t, 1> mapping;
+	const smt::darray<float_t, 1> bvalues;
+	const smt::darray<smt::sarray<float_t, 3>, 1> gradients;
+	const smt::darray<std::size_t, 1> mapping;
 
-	diffenc_t(const std::string& filename_bvals, const std::string& filename_bvecs):
-			bvalues(read_bvals(filename_bvals)),
-			gradients(read_bvecs(filename_bvecs)),
-			mapping(read_bmap(filename_bvals, filename_bvecs)) {
+	diffenc() {}
 
-// TODO: Explicit normalisation?
-//		for(std::size_t ii = 0; ii < bvalues.size(0); ++ii) {
-//			const float_t norm_tmp_pow2 = smt::dot(gradients(ii), gradients(ii));
-//			bvalues(ii) *= norm_tmp_pow2;
-//			if(norm_tmp_pow2 == float_t(0)) {
-//				gradients(ii) = 0;
-//			} else {
-//				gradients(ii) /= std::sqrt(norm_tmp_pow2);
-//			}
-//		}
-	}
+	diffenc(const std::string& filename_bvals, const std::string& filename_bvecs):
+		diffenc(diffenc_fsl(filename_bvals, filename_bvecs)) {
 
-	void corrdiffenc(smt::sarray<float_t, 3, 3> graddev) {
-		graddev(0, 0) += float_t(1);
-		graddev(1, 1) += float_t(1);
-		graddev(2, 2) += float_t(1);
-
-		for(std::size_t ii = 0; ii < bvalues.size(0); ++ii) {
-			const smt::sarray<float_t, 3> tmp = smt::gemv(graddev, gradients(ii));
-			const float_t norm_tmp_pow2 = smt::dot(tmp, tmp);
-			bvalues(ii) *= norm_tmp_pow2;
-			if(norm_tmp_pow2 == float_t(0)) {
-				gradients(ii) = 0;
-			} else {
-				gradients(ii) = tmp/std::sqrt(norm_tmp_pow2);
-			}
+		if(! has_nonnegative_bvalues()) {
+			std::cerr << "ERROR: '" << filename_bvals << "' has diffusion weighting factors which are not non-negative."  << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
+		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+			std::cerr << "ERROR: '" << filename_bvecs << "' has diffusion gradient directions which are not normalised."  << std::endl;
+			std::exit(EXIT_FAILURE);
 		}
 	}
 
-	bool anyZeroBValue() const {
-		for(std::size_t ii = 0; ii < mapping.size(0); ++ii) {
-			if(bvalues(mapping(ii)) == float_t(0)) {
-				return true;
-			}
-		}
+	diffenc(const std::string& filename):
+		diffenc(diffenc_mrtrix(filename)) {
 
-		return false;
+		if(! has_nonnegative_bvalues()) {
+			std::cerr << "ERROR: '" << filename << "' has diffusion weighting factors which are not non-negative."  << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
+		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+			std::cerr << "ERROR: '" << filename << "' has diffusion gradient directions which are not normalised."  << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	diffenc(const diffenc& rhs, const smt::sarray<float_t, 3, 3>& graddev):
+		diffenc(diffenc_graddev(rhs, graddev)) {}
+
+	explicit operator bool() const {
+		return (mapping)? true : false;
+	}
+
+	bool any_zero_bvalue() const {
+		return std::any_of(std::begin(mapping), std::end(mapping), [&](const std::size_t& idx) {
+			return bvalues(idx) == float_t(0);
+		});
 	}
 
 private:
-	smt::darray<float_t, 1> read_bvals(const std::string& filename) const {
+	diffenc(const std::tuple<smt::darray<float_t, 1>, smt::darray<smt::sarray<float_t, 3>, 1>, smt::darray<std::size_t, 1>>& rhs):
+		bvalues(std::get<0>(rhs)),
+		gradients(std::get<1>(rhs)),
+		mapping(std::get<2>(rhs)) {}
+
+	std::tuple<smt::darray<float_t, 1>, smt::darray<smt::sarray<float_t, 3>, 1>, smt::darray<std::size_t, 1>> diffenc_fsl(
+			const std::string& filename_bvals, const std::string& filename_bvecs) const {
+		const std::deque<float_t> buf_bvals(read_bvals_fsl(filename_bvals));
+		smt::darray<float_t, 1> bvalues_(buf_bvals.size());
+		for(std::size_t ii = 0; ii < bvalues_.size(0); ++ii) {
+			bvalues_(ii) = buf_bvals[ii];
+		}
+		const std::array<std::deque<float_t>, 3> buf_bvecs(read_bvecs_fsl(filename_bvecs));
+		smt::darray<smt::sarray<float_t, 3>, 1> gradients_(std::min(buf_bvecs[0].size(), std::min(buf_bvecs[1].size(), buf_bvecs[2].size())));
+		for(std::size_t ii = 0; ii < gradients_.size(0); ++ii) {
+			gradients_(ii)(0) = buf_bvecs[0][ii];
+			gradients_(ii)(1) = buf_bvecs[1][ii];
+			gradients_(ii)(2) = buf_bvecs[2][ii];
+		}
+		if(bvalues_.size(0) != gradients_.size(0)) {
+			std::cerr << "ERROR: '" << filename_bvals << "' and '" << filename_bvecs << "' do not match." << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
+		smt::darray<std::size_t, 1> mapping_(bvalues_.size(0));
+		std::iota(std::begin(mapping_), std::end(mapping_), 0);
+
+		return std::make_tuple(bvalues_, gradients_, mapping_);
+	}
+
+	std::tuple<smt::darray<float_t, 1>, smt::darray<smt::sarray<float_t, 3>, 1>, smt::darray<std::size_t, 1>> diffenc_mrtrix(
+			const std::string& filename) const {
+		const std::deque<smt::sarray<float_t, 4>> buf(read_grads_mrtrix(filename));
+		smt::darray<float_t, 1> bvalues_(buf.size());
+		for(std::size_t ii = 0; ii < bvalues_.size(0); ++ii) {
+			bvalues_(ii) = buf[ii][3];
+		}
+		smt::darray<smt::sarray<float_t, 3>, 1> gradients_(buf.size());
+		for(std::size_t ii = 0; ii < gradients_.size(0); ++ii) {
+			gradients_(ii)(0) = buf[ii][0];
+			gradients_(ii)(1) = buf[ii][1];
+			gradients_(ii)(2) = buf[ii][2];
+		}
+		smt::darray<std::size_t, 1> mapping_(bvalues_.size(0));
+		std::iota(std::begin(mapping_), std::end(mapping_), 0);
+
+		return std::make_tuple(bvalues_, gradients_, mapping_);
+	}
+
+	std::tuple<smt::darray<float_t, 1>, smt::darray<smt::sarray<float_t, 3>, 1>, smt::darray<std::size_t, 1>> diffenc_graddev(
+			const diffenc& rhs, const smt::sarray<float_t, 3, 3>& graddev) const {
+		const smt::sarray<float_t, 3, 3> id(smt::eye<float_t, 3, 3>());
+		smt::darray<float_t, 1> bvalues_(rhs.bvalues);
+		smt::darray<smt::sarray<float_t, 3>, 1> gradients_(rhs.gradients);
+		for(std::size_t ii = 0; ii < bvalues_.size(0); ++ii) {
+			const smt::sarray<float_t, 3> tmp = smt::gemv(smt::sarray<float_t, 3, 3>(id+graddev), gradients_(ii));
+			const float_t norm_tmp_pow2 = smt::dot(tmp, tmp);
+			bvalues_(ii) *= norm_tmp_pow2;
+			if(norm_tmp_pow2 == float_t(0)) {
+				gradients_(ii) = float_t(0);
+			} else {
+				gradients_(ii) = tmp/std::sqrt(norm_tmp_pow2);
+			}
+		}
+		smt::darray<std::size_t, 1> mapping_(rhs.mapping);
+
+		return std::make_tuple(bvalues_, gradients_, mapping_);
+	}
+
+	std::deque<float_t> read_bvals_fsl(const std::string& filename) const {
 		std::ifstream fin(filename.c_str());
 		std::deque<float_t> buf;
 		if(fin.good()) {
@@ -112,17 +182,13 @@ private:
 			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
-		smt::darray<float_t, 1> bvals(buf.size());
-		for(std::size_t ii = 0; ii < bvals.size(0); ++ii) {
-			bvals(ii) = buf[ii];
-		}
 
-		return bvals;
+		return buf;
 	}
 
-	smt::darray<smt::sarray<float_t, 3>, 1> read_bvecs(const std::string& filename) const {
+	std::array<std::deque<float_t>, 3> read_bvecs_fsl(const std::string& filename) const {
 		std::ifstream fin(filename.c_str());
-		std::deque<float_t> buf[3];
+		std::array<std::deque<float_t>, 3> buf;
 		if(fin.good()) {
 			std::size_t line = 0;
 			std::string str;
@@ -139,28 +205,48 @@ private:
 			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
-		smt::darray<smt::sarray<float_t, 3>, 1> bvecs(std::min(buf[0].size(), std::min(buf[1].size(), buf[2].size())));
-		for(std::size_t ii = 0; ii < bvecs.size(0); ++ii) {
-			bvecs(ii)(0) = buf[0][ii];
-			bvecs(ii)(1) = buf[1][ii];
-			bvecs(ii)(2) = buf[2][ii];
-		}
 
-		return bvecs;
+		return buf;
 	}
 
-	smt::darray<std::size_t, 1> read_bmap(const std::string& filename_bvals, const std::string& filename_bvecs) const {
-		if(bvalues.size(0) != gradients.size(0)) {
-			std::cerr << "ERROR: '" << filename_bvals << "' and '" << filename_bvecs << "' do not match." << std::endl;
+	std::deque<smt::sarray<float_t, 4>> read_grads_mrtrix(const std::string& filename) const {
+		std::ifstream fin(filename.c_str());
+		std::deque<smt::sarray<float_t, 4>> buf;
+		if(fin.good()) {
+			std::string str;
+			while(std::getline(fin, str)) {
+				std::istringstream sin(str);
+				smt::sarray<float_t, 4> tmp;
+				if(sin >> tmp[0]
+						&& sin.ignore(std::numeric_limits<std::streamsize>::max(), ',')
+						&& sin >> tmp[1]
+						&& sin.ignore(std::numeric_limits<std::streamsize>::max(), ',')
+						&& sin >> tmp[2]
+						&& sin.ignore(std::numeric_limits<std::streamsize>::max(), ',')
+						&& sin >> tmp[3]) {
+					buf.push_back(tmp);
+				}
+			}
+			fin.close();
+		} else {
+			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
 
-		smt::darray<std::size_t, 1> bmap(bvalues.size(0));
-		for(std::size_t ii = 0; ii < bmap.size(0); ++ii) {
-			bmap(ii) = ii;
-		}
+		return buf;
+	}
 
-		return bmap;
+	bool has_nonnegative_bvalues() const {
+		return std::all_of(std::begin(mapping), std::end(mapping), [&](const std::size_t& idx) {
+			return bvalues(idx) >= float_t(0);
+		});
+	}
+
+	bool has_normalised_gradients(const float_t& tol) const {
+		return std::all_of(std::begin(mapping), std::end(mapping), [&](const std::size_t& idx) {
+			const float_t norm_tmp_pow2 = smt::dot(gradients(idx), gradients(idx));
+			return norm_tmp_pow2 == float_t(0) || (float_t(1)-tol <= norm_tmp_pow2 && norm_tmp_pow2 <= float_t(1)+tol);
+		});
 	}
 };
 

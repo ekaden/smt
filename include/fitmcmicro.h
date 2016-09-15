@@ -53,21 +53,21 @@ template <typename float_t>
 class McMicroFunction {
 public:
 	McMicroFunction(const smt::darray<float_t, 1>& y,
-			const smt::diffenc_t<float_t>& diffenc,
+			const smt::diffenc<float_t>& dw,
 			const float_t& diffmax = 3.05e-3):
 				_y(y),
-				_diffenc(diffenc),
+				_dw(dw),
 				_intramax(1),
 				_diffmax(diffmax),
-				_y0(mean(y, diffenc)) {
+				_y0(mean(y, dw)) {
 	}
 
 	float_t operator()(const smt::sarray<float_t, 2>& x) const {
 		const float_t intra = smt::expit(x(0), _intramax);
 		const float_t diff = smt::expit(x(1), _diffmax);
 		float_t fval = 0;
-		for(std::size_t ii = 0; ii < _diffenc.mapping.size(); ++ii) {
-			const float_t bvalue = _diffenc.bvalues(_diffenc.mapping(ii));
+		for(std::size_t ii = 0; ii < _dw.mapping.size(); ++ii) {
+			const float_t bvalue = _dw.bvalues(_dw.mapping(ii));
 			if(bvalue > float_t(0)) {
 				fval += smt::pow2(_y(ii)-_y0*(intra*smt::meansignal(bvalue, diff, float_t(0))+(float_t(1)-intra)*smt::meansignal(bvalue, diff, tortuosity(intra)*diff)));
 			}
@@ -114,7 +114,7 @@ public:
 
 private:
 	const smt::darray<float_t, 1> _y;
-	const smt::diffenc_t<float_t> _diffenc;
+	const smt::diffenc<float_t> _dw;
 	const float_t _intramax;
 	const float_t _diffmax;
 	const float_t _y0;
@@ -123,11 +123,11 @@ private:
 		return float_t(1)-smt::project(intra, float_t(0), _intramax);
 	}
 
-	float_t mean(const smt::darray<float_t, 1>& y, const smt::diffenc_t<float_t>& diffenc) const {
+	float_t mean(const smt::darray<float_t, 1>& y, const smt::diffenc<float_t>& dw) const {
 		float_t y0 = 0;
 		std::size_t n = 0;
-		for(std::size_t ii = 0; ii < diffenc.mapping.size(); ++ii) {
-			if(diffenc.bvalues(diffenc.mapping(ii)) == float_t(0)) {
+		for(std::size_t ii = 0; ii < dw.mapping.size(); ++ii) {
+			if(dw.bvalues(dw.mapping(ii)) == float_t(0)) {
 				y0 += y(ii);
 				++n;
 			}
@@ -143,10 +143,10 @@ template <typename float_t>
 class McMicro0Function {
 public:
 	McMicro0Function(const smt::darray<float_t, 1>& y,
-			const smt::diffenc_t<float_t>& diffenc,
+			const smt::diffenc<float_t>& dw,
 			const float_t& diffmax = 3.05e-3):
 				_y(y),
-				_diffenc(diffenc),
+				_dw(dw),
 				_intramax(1),
 				_diffmax(diffmax) {
 	}
@@ -156,8 +156,8 @@ public:
 		const float_t diff = smt::expit(x(1), _diffmax);
 		const float_t e0 = std::exp(x(2));
 		float_t fval = 0;
-		for(std::size_t ii = 0; ii < _diffenc.mapping.size(); ++ii) {
-			const float_t bvalue = _diffenc.bvalues(_diffenc.mapping(ii));
+		for(std::size_t ii = 0; ii < _dw.mapping.size(); ++ii) {
+			const float_t bvalue = _dw.bvalues(_dw.mapping(ii));
 			fval += smt::pow2(_y(ii)-e0*(intra*smt::meansignal(bvalue, diff, float_t(0))+(float_t(1)-intra)*smt::meansignal(bvalue, diff, tortuosity(intra)*diff)));
 		}
 
@@ -196,7 +196,7 @@ public:
 
 private:
 	const smt::darray<float_t, 1> _y;
-	const smt::diffenc_t<float_t> _diffenc;
+	const smt::diffenc<float_t> _dw;
 	const float_t _intramax;
 	const float_t _diffmax;
 
@@ -216,7 +216,7 @@ private:
 
 template <typename float_t>
 smt::sarray<float_t, 3> fitmcmicro(const smt::darray<float_t, 1>& y,
-		const smt::diffenc_t<float_t>& diffenc,
+		const smt::diffenc<float_t>& dw,
 		const float_t& diffmax = 3.05e-3,
 		const bool& b0 = false,
 		const float_t& opt_rel = 1000*std::numeric_limits<float_t>::epsilon(),
@@ -224,8 +224,8 @@ smt::sarray<float_t, 3> fitmcmicro(const smt::darray<float_t, 1>& y,
 
 	// TODO: Random initialisation?
 
-	if(! b0 && diffenc.anyZeroBValue()) {
-		McMicroFunction<float_t> f(y, diffenc, diffmax);
+	if(! b0 && dw.any_zero_bvalue()) {
+		McMicroFunction<float_t> f(y, dw, diffmax);
 		smt::sNelderMead<float_t, 2, McMicroFunction<float_t>> ssolver(f);
 		ssolver.init(f.init());
 		ssolver.solve(opt_rel, opt_abs);
@@ -233,7 +233,7 @@ smt::sarray<float_t, 3> fitmcmicro(const smt::darray<float_t, 1>& y,
 
 		return x;
 	} else {
-		McMicro0Function<float_t> f(y, diffenc, diffmax);
+		McMicro0Function<float_t> f(y, dw, diffmax);
 		smt::sNelderMead<float_t, 3, McMicro0Function<float_t>> ssolver(f);
 		ssolver.init(f.init());
 		ssolver.solve(opt_rel, opt_abs);

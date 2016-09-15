@@ -84,8 +84,9 @@ Usage:
   fitmcmicro --version
 
 Options:
-  --bvals <bvals>      Diffusion weighting factors (s/mm²)
-  --bvecs <bvecs>      Diffusion gradient directions
+  --bvals <bvals>      Diffusion weighting factors (s/mm²) in FSL format
+  --bvecs <bvecs>      Diffusion gradient directions in FSL format
+  --grads <grads>      Diffusion gradients (s/mm²) in MRtrix format
   --graddev <graddev>  Diffusion gradient deviation [default: none]
   --mask <mask>        Foreground mask [default: none]
   --rician <rician>    Rician noise [default: none]
@@ -95,6 +96,35 @@ Options:
   --license            License information
   --version            Software version
 )";
+
+template <typename float_t>
+smt::diffenc<float_t> read_diffenc(std::map<std::string, docopt::value>& args) {
+	if(args["--bvals"] && args["--bvecs"] && !args["--grads"]) {
+		return smt::diffenc<float_t>(args["--bvals"].asString(), args["--bvecs"].asString());
+	} else if(!args["--bvals"] && !args["--bvecs"] && args["--grads"]) {
+		return smt::diffenc<float_t>(args["--grads"].asString());
+	} else {
+		std::cerr << "ERROR: Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required." << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+}
+
+template <typename float_t>
+smt::sarray<float_t, 3, 3> reshape_graddev(const smt::darray<float_t, 1>& g) {
+	insist(g.size(0) == 9);
+	smt::sarray<float_t, 3, 3> G;
+	G(0, 0) = g(0);
+	G(1, 0) = g(1);
+	G(2, 0) = g(2);
+	G(0, 1) = g(3);
+	G(1, 1) = g(4);
+	G(2, 1) = g(5);
+	G(0, 2) = g(6);
+	G(1, 2) = g(7);
+	G(2, 2) = g(8);
+
+	return G;
+}
 
 int main(int argc, const char** argv) {
 
@@ -115,9 +145,15 @@ int main(int argc, const char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	smt::diffenc_t<float_t> diffenc(args["--bvals"].asString(), args["--bvecs"].asString());
-	if(input.size(3) != diffenc.mapping.size(0)) {
-		std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--bvals"].asString() << "' and/or '" << args["--bvecs"].asString() << "' do not match." << std::endl;
+	const smt::diffenc<float_t> dw = read_diffenc<float_t>(args);
+	if(input.size(3) != dw.mapping.size(0)) {
+		if(args["--bvals"] && args["--bvecs"] && !args["--grads"]) {
+			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--bvals"].asString() << "' and/or '" << args["--bvecs"].asString() << "' do not match." << std::endl;
+		} else if(!args["--bvals"] && !args["--bvecs"] && args["--grads"]) {
+			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--grads"].asString() << "' do not match." << std::endl;
+		} else {
+			std::cerr << "ERROR: Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required." << std::endl;
+		}
 		return EXIT_FAILURE;
 	}
 
@@ -194,22 +230,10 @@ int main(int argc, const char** argv) {
 						}
 					}
 
-					smt::diffenc_t<float_t> diffenc_tmp(diffenc);
-					if(graddev) {
-						smt::sarray<float_t, 3, 3> graddev_tmp;
-						graddev_tmp(0, 0) = graddev(ii, jj, kk, 0);
-						graddev_tmp(1, 0) = graddev(ii, jj, kk, 1);
-						graddev_tmp(2, 0) = graddev(ii, jj, kk, 2);
-						graddev_tmp(0, 1) = graddev(ii, jj, kk, 3);
-						graddev_tmp(1, 1) = graddev(ii, jj, kk, 4);
-						graddev_tmp(2, 1) = graddev(ii, jj, kk, 5);
-						graddev_tmp(0, 2) = graddev(ii, jj, kk, 6);
-						graddev_tmp(1, 2) = graddev(ii, jj, kk, 7);
-						graddev_tmp(2, 2) = graddev(ii, jj, kk, 8);
-						diffenc_tmp.corrdiffenc(graddev_tmp);
-					}
+					const smt::diffenc<float_t> dw_tmp = (graddev)?
+							smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
 
-					smt::sarray<float_t, 3> fitmcmicro_tmp = smt::fitmcmicro(input_tmp, diffenc_tmp, maxdiff, b0);
+					smt::sarray<float_t, 3> fitmcmicro_tmp = smt::fitmcmicro(input_tmp, dw_tmp, maxdiff, b0);
 					output.colmaj(ii, jj, kk, 0) = fitmcmicro_tmp(0);
 					output.colmaj(ii, jj, kk, 1) = fitmcmicro_tmp(1);
 					output.colmaj(ii, jj, kk, 2) = (float_t(1)-fitmcmicro_tmp(0))*fitmcmicro_tmp(1);
