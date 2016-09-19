@@ -28,7 +28,7 @@
 #define _VERSION_H
 
 #ifndef SMT_VERSION_STRING
-#define SMT_VERSION_STRING "unkown"
+#define SMT_VERSION_STRING "unknown"
 #endif
 
 #define STR_EXPAND(x) #x
