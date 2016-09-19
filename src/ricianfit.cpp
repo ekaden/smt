@@ -35,8 +35,9 @@
 #include "nifti.h"
 #include "ricianfit.h"
 #include "sarray.h"
+#include "version.h"
 
-static const char VERSION[] = R"(ricianfit v0.1)";
+static const char VERSION[] = R"(ricianfit )" STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
 Copyright (c) 2016 Enrico Kaden & University College London

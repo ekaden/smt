@@ -74,6 +74,16 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 	endif()
 endif()
 
+find_package(Git)
+if(GIT_FOUND)
+    execute_process(
+            COMMAND ${GIT_EXECUTABLE} describe --tags
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            OUTPUT_VARIABLE SMT_VERSION_STRING
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    add_definitions(-DSMT_VERSION_STRING=${SMT_VERSION_STRING})
+endif()
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/docopt.cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/znzlib/include")

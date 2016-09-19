@@ -38,8 +38,9 @@
 #include "nifti.h"
 #include "ricedebias.h"
 #include "sarray.h"
+#include "version.h"
 
-static const char VERSION[] = R"(fitmcmicro v0.1)";
+static const char VERSION[] = R"(fitmcmicro )" STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
 Copyright (c) 2016 Enrico Kaden & University College London
