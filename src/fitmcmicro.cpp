@@ -35,6 +35,7 @@
 #include "darray.h"
 #include "diffenc.h"
 #include "fitmcmicro.h"
+#include "fmt.h"
 #include "nifti.h"
 #include "ricedebias.h"
 #include "sarray.h"
@@ -258,10 +259,27 @@ int main(int argc, const char** argv) {
 
 	const bool b0 = args["--b0"].asBool();
 
+	const int split = smt::is_format_string(args["<output>"].asString());
+	if(split < 0) {
+		std::cerr << "ERROR: " << args["<output>"].asString() << " is malformed." << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+
 	// Processing
 
-	// TODO: Separate NIfTI-1 output (e.g. <output>_intra.nii, <output>_diff.nii, <output>_extra_diff_trans, <output>_extra_diff_mean.nii, <output>_b0.ni).
-	smt::onifti<float, 4> output = smt::onifti<float, 4>(args["<output>"].asString(), input, input.size(0), input.size(1), input.size(2), 5);
+	smt::onifti<float, 3> output_intra = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "intra"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_diff = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "diff"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_extratrans = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "extratrans"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_extramd = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "extramd"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_b0 = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "b0"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 4> output = (split > 0)? smt::onifti<float, 4>() : smt::onifti<float, 4>(smt::format_string(args["<output>"].asString()), input, input.size(0), input.size(1), input.size(2), 5);
+
+	if(split > 0) {
+		output_intra.cal(0, 1);
+		output_diff.cal(0, maxdiff);
+		output_extratrans.cal(0, maxdiff);
+		output_extramd.cal(0, maxdiff);
+	}
 
 	const std::size_t input_size_0 = input.size(0);
 	const std::size_t input_size_1 = input.size(1);
@@ -288,17 +306,33 @@ int main(int argc, const char** argv) {
 							smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
 
 					const smt::sarray<float_t, 3> fit = smt::fitmcmicro(input_tmp, dw_tmp, maxdiff, b0);
-					output(ii, jj, kk, 0) = fit(0);
-					output(ii, jj, kk, 1) = fit(1);
-					output(ii, jj, kk, 2) = (float_t(1)-fit(0))*fit(1);
-					output(ii, jj, kk, 3) = (float_t(1)-float_t(2)/float_t(3)*fit(0))*fit(1);
-					output(ii, jj, kk, 4) = fit(2);
+					if(split > 0) {
+						output_intra(ii, jj, kk) = fit(0);
+						output_diff(ii, jj, kk) = fit(1);
+						output_extratrans(ii, jj, kk) = (float_t(1)-fit(0))*fit(1);
+						output_extramd(ii, jj, kk) = (float_t(1)-float_t(2)/float_t(3)*fit(0))*fit(1);
+						output_b0(ii, jj, kk) = fit(2);
+					} else {
+						output(ii, jj, kk, 0) = fit(0);
+						output(ii, jj, kk, 1) = fit(1);
+						output(ii, jj, kk, 2) = (float_t(1)-fit(0))*fit(1);
+						output(ii, jj, kk, 3) = (float_t(1)-float_t(2)/float_t(3)*fit(0))*fit(1);
+						output(ii, jj, kk, 4) = fit(2);
+					}
 				} else {
-					output(ii, jj, kk, 0) = 0;
-					output(ii, jj, kk, 1) = 0;
-					output(ii, jj, kk, 2) = 0;
-					output(ii, jj, kk, 3) = 0;
-					output(ii, jj, kk, 4) = 0;
+					if(split > 0) {
+						output_intra(ii, jj, kk) = 0;
+						output_diff(ii, jj, kk) = 0;
+						output_extratrans(ii, jj, kk) = 0;
+						output_extramd(ii, jj, kk) = 0;
+						output_b0(ii, jj, kk) = 0;
+					} else {
+						output(ii, jj, kk, 0) = 0;
+						output(ii, jj, kk, 1) = 0;
+						output(ii, jj, kk, 2) = 0;
+						output(ii, jj, kk, 3) = 0;
+						output(ii, jj, kk, 4) = 0;
+					}
 				}
 			}
 		}

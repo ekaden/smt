@@ -35,6 +35,7 @@
 #include "darray.h"
 #include "diffenc.h"
 #include "fitmicrodt.h"
+#include "fmt.h"
 #include "nifti.h"
 #include "ricedebias.h"
 #include "sarray.h"
@@ -258,10 +259,29 @@ int main(int argc, const char** argv) {
 
 	const bool b0 = args["--b0"].asBool();
 
+	const int split = smt::is_format_string(args["<output>"].asString());
+	if(split < 0) {
+		std::cerr << "ERROR: " << args["<output>"].asString() << " is malformed." << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+
 	// Processing
 
-	// TODO: Separate NIfTI-1 output (e.g. <output>_diff_long.nii, <output>_diff_trans.nii, <output>_fa.nii, <output>_md.nii, <output>_b0.ni).
-	smt::onifti<float, 4> output = smt::onifti<float, 4>(args["<output>"].asString(), input, input.size(0), input.size(1), input.size(2), 6);
+	smt::onifti<float, 3> output_long = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "long"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_trans = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "trans"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_fa = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "fa"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_fapow3 = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "fapow3"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_md = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "md"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_b0 = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "b0"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 4> output = (split > 0)? smt::onifti<float, 4>() : smt::onifti<float, 4>(smt::format_string(args["<output>"].asString()), input, input.size(0), input.size(1), input.size(2), 6);
+
+	if(split > 0) {
+		output_long.cal(0, maxdiff);
+		output_trans.cal(0, maxdiff);
+		output_fa.cal(0, 1);
+		output_fapow3.cal(0, 1);
+		output_md.cal(0, maxdiff);
+	}
 
 	const std::size_t input_size_0 = input.size(0);
 	const std::size_t input_size_1 = input.size(1);
@@ -288,19 +308,37 @@ int main(int argc, const char** argv) {
 							smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
 
 					const smt::sarray<float_t, 3> fit = smt::fitmicrodt(input_tmp, dw_tmp, maxdiff, b0);
-					output(ii, jj, kk, 0) = fit(0);
-					output(ii, jj, kk, 1) = fit(1);
-					output(ii, jj, kk, 2) = smt::microfa(fit(0), fit(1));
-					output(ii, jj, kk, 3) = std::pow(smt::microfa(fit(0), fit(1)), 3);
-					output(ii, jj, kk, 4) = smt::micromd(fit(0), fit(1));
-					output(ii, jj, kk, 5) = fit(2);
+					if(split > 0) {
+						output_long(ii, jj, kk) = fit(0);
+						output_trans(ii, jj, kk) = fit(1);
+						output_fa(ii, jj, kk) = smt::microfa(fit(0), fit(1));
+						output_fapow3(ii, jj, kk) = std::pow(smt::microfa(fit(0), fit(1)), 3);
+						output_md(ii, jj, kk) = smt::micromd(fit(0), fit(1));
+						output_b0(ii, jj, kk) = fit(2);
+					} else {
+						output(ii, jj, kk, 0) = fit(0);
+						output(ii, jj, kk, 1) = fit(1);
+						output(ii, jj, kk, 2) = smt::microfa(fit(0), fit(1));
+						output(ii, jj, kk, 3) = std::pow(smt::microfa(fit(0), fit(1)), 3);
+						output(ii, jj, kk, 4) = smt::micromd(fit(0), fit(1));
+						output(ii, jj, kk, 5) = fit(2);
+					}
 				} else {
-					output(ii, jj, kk, 0) = 0;
-					output(ii, jj, kk, 1) = 0;
-					output(ii, jj, kk, 2) = 0;
-					output(ii, jj, kk, 3) = 0;
-					output(ii, jj, kk, 4) = 0;
-					output(ii, jj, kk, 5) = 0;
+					if(split > 0) {
+						output_long(ii, jj, kk) = 0;
+						output_trans(ii, jj, kk) = 0;
+						output_fa(ii, jj, kk) = 0;
+						output_fapow3(ii, jj, kk) = 0;
+						output_md(ii, jj, kk) = 0;
+						output_b0(ii, jj, kk) = 0;
+					} else {
+						output(ii, jj, kk, 0) = 0;
+						output(ii, jj, kk, 1) = 0;
+						output(ii, jj, kk, 2) = 0;
+						output(ii, jj, kk, 3) = 0;
+						output(ii, jj, kk, 4) = 0;
+						output(ii, jj, kk, 5) = 0;
+					}
 				}
 			}
 		}

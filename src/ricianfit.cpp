@@ -32,6 +32,7 @@
 #include "docopt.h"
 
 #include "darray.h"
+#include "fmt.h"
 #include "nifti.h"
 #include "ricianfit.h"
 #include "sarray.h"
@@ -126,10 +127,17 @@ int main(int argc, const char** argv) {
 		}
 	}
 
+	const int split = smt::is_format_string(args["<output>"].asString());
+	if(split < 0) {
+		std::cerr << "ERROR: " << args["<output>"].asString() << " is malformed." << std::endl;
+		return EXIT_FAILURE;
+	}
+
 	// Processing
 
-	// TODO: Separate NIfTI-1 output (e.g. <output>_signal.nii and <output>_noise.nii).
-	smt::onifti<float, 4> output = smt::onifti<float, 4>(args["<output>"].asString(), input, input.size(0), input.size(1), input.size(2), 2);
+	smt::onifti<float, 3> output_loc = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "loc"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 3> output_scale = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "scale"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
+	smt::onifti<float, 4> output = (split > 0)? smt::onifti<float, 4>() : smt::onifti<float, 4>(smt::format_string(args["<output>"].asString()), input, input.size(0), input.size(1), input.size(2), 2);
 
 	const std::size_t input_size_0 = input.size(0);
 	const std::size_t input_size_1 = input.size(1);
@@ -142,11 +150,21 @@ int main(int argc, const char** argv) {
 					smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
 
 					const smt::sarray<float_t, 2> fit = smt::ricianfit(input_tmp);
-					output(ii, jj, kk, 0) = fit(0);
-					output(ii, jj, kk, 1) = fit(1);
+					if(split > 0) {
+						output_loc(ii, jj, kk) = fit(0);
+						output_scale(ii, jj, kk) = fit(1);
+					} else {
+						output(ii, jj, kk, 0) = fit(0);
+						output(ii, jj, kk, 1) = fit(1);
+					}
 				} else {
-					output(ii, jj, kk, 0) = 0;
-					output(ii, jj, kk, 1) = 0;
+					if(split > 0) {
+						output_loc(ii, jj, kk) = 0;
+						output_scale(ii, jj, kk) = 0;
+					} else {
+						output(ii, jj, kk, 0) = 0;
+						output(ii, jj, kk, 1) = 0;
+					}
 				}
 			}
 		}

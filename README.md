@@ -34,6 +34,37 @@ make
 
 The SMT programs are located in the build directory.
 
+## Rician noise estimation
+
+This utility software provides a voxelwise estimate of the Rician-distributed noise from, for example, a set of zero b-value images.
+
+### Usage
+
+```
+ricianfit [options] <input> <output>
+ricianfit (-h | --help)
+ricianfit --license
+ricianfit --version
+```
+
+* `<input>` –– Input data set in NIfTI-1 format
+
+* `<output>` –– Output parameter maps in NIfTI-1 format, including:
+  1. Location parameter (`loc`)
+  2. Scale parameter (`scale`)
+
+If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the parameter maps are written to separate files using the suffices given in parentheses. Otherwise the output parameter maps are stored in a single file.
+
+### Options
+
+* `--mask <mask>` –– Foreground mask [default: none]. Values greater than zero are considered as foreground.
+
+* `-h, --help` –– Help screen
+
+* `--license` –– License information
+
+* `--version` –– Software version
+
 ## Microscopic diffusion tensor
 
 This microscopic model estimates the microscopic fractional anisotropy and other microscopic diffusion coefficients in tissue with complex directional architecture as in the brain.
@@ -49,12 +80,15 @@ fitmicrodt --version
 
 * `<input>` –– Input diffusion data set in NIfTI-1 format
 
-* `<output>` –– Output parameter maps in NIfTI-1 format, containing:
-  1. Longitudinal microscopic diffusivity
-  2. Transverse microscopic diffusivity
-  3. Microscopic fractional anisotropy
-  4. Microscopic mean diffusivity
-  5. Zero b-value image
+* `<output>` –– Output parameter maps in NIfTI-1 format, including:
+  1. Longitudinal microscopic diffusivity (`long`)
+  2. Transverse microscopic diffusivity (`trans`)
+  3. Microscopic fractional anisotropy (`fa`)
+  4. Microscopic fractional anisotropy to the third power (`fapow3`)
+  5. Microscopic mean diffusivity (`md`)
+  6. Zero b-value image (`b0`)
+
+If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the parameter maps are written to separate files using the suffices given in parentheses. Otherwise the output parameter maps are stored in a single file.
 
 ### Options
 
@@ -95,12 +129,14 @@ fitmcmicro --version
 
 * `<input>` –– Input diffusion data set in NIfTI-1 format
 
-* `<output>` –– Output parameter maps in NIfTI-1 format, containing:
-  1. Intra-neurite volume fraction
-  2. Intrinsic diffusivity
-  3. Extra-neurite transverse microscopic diffusivity
-  4. Extra-neurite microscopic mean diffusivity
-  5. Zero b-value image
+* `<output>` –– Output parameter maps in NIfTI-1 format, including:
+  1. Intra-neurite volume fraction (`intra`)
+  2. Intrinsic diffusivity (`diff`)
+  3. Extra-neurite transverse microscopic diffusivity (`extratrans`)
+  4. Extra-neurite microscopic mean diffusivity (`extramd`)
+  5. Zero b-value image (`b0`)
+
+If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the parameter maps are written to separate files using the suffices given in parentheses. Otherwise the output parameter maps are stored in a single file.
 
 ### Options
 
