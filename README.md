@@ -1,7 +1,5 @@
 # SMT
 
-[![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE.md)
-
 The [Spherical Mean Technique (SMT)](http://dx.doi.org/10.1002/mrm.25734) is a clinically feasible method for microscopic diffusion anisotropy imaging. The purpose is to map microscopic features unconfounded by the effects of fibre crossings and orientation dispersion, which are ubiquitous in the brain. This technique requires only an off-the-shelf diffusion sequence with two (or more) b-shells achievable on any standard MRI scanner, thus facilitating its widespread use in neuroscience research and clinical neurology. So far, SMT comes in two flavours, a microscopic tensor model and a simple multi-compartment model. This software was developed and is maintained by [Enrico Kaden](https://ekaden.github.io) from University College London.
 
 ## Building
@@ -154,4 +152,4 @@ Kaden E, Kelm ND, Carson RP, Does MD, and Alexander DC: Multi-compartment micros
 
 ## License
 
-SMT is released under the [BSD Two-Clause License](LICENSE.md).
+SMT is released under the [BSD Two-Clause License](LICENSE.md). This software is based on or incorporates materials from [third-party projects](THIRDPARTY.md).
