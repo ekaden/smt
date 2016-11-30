@@ -38,7 +38,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
 		message(FATAL_ERROR "g++ version must be at least 4.9")
 	else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Ofast -fopenmp ")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Ofast -fopenmp")
 	endif()
 endif()
 
@@ -84,26 +84,29 @@ if(GIT_FOUND)
     add_definitions(-DSMT_VERSION_STRING=${SMT_VERSION_STRING})
 endif()
 
+find_package(ZLIB)
+if(ZLIB_FOUND)
+	add_definitions(-DZLIB_FOUND)
+	include_directories(${ZLIB_INCLUDE_DIRS})
+endif()
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/docopt.cpp/include")
-include_directories("${PROJECT_SOURCE_DIR}/znzlib/include")
 include_directories("${PROJECT_SOURCE_DIR}/niftilib/include")
-
-add_definitions(-DHAVE_ZLIB)
 
 add_library(docopt SHARED docopt.cpp/src/docopt.cpp)
 
-add_library(znz SHARED znzlib/src/znzlib.c)
-target_link_libraries(znz z)
-
-add_library(nifti SHARED niftilib/src/nifti1_io.c)
-target_link_libraries(nifti znz)
-
 add_executable(ricianfit src/ricianfit.cpp)
-target_link_libraries(ricianfit docopt nifti)
+target_link_libraries(ricianfit docopt)
 
 add_executable(fitmicrodt src/fitmicrodt.cpp)
-target_link_libraries(fitmicrodt docopt nifti)
+target_link_libraries(fitmicrodt docopt)
 
 add_executable(fitmcmicro src/fitmcmicro.cpp)
-target_link_libraries(fitmcmicro docopt nifti)
+target_link_libraries(fitmcmicro docopt)
+
+if(ZLIB_FOUND)
+	target_link_libraries(ricianfit ${ZLIB_LIBRARIES})
+	target_link_libraries(fitmicrodt ${ZLIB_LIBRARIES})
+	target_link_libraries(fitmcmicro ${ZLIB_LIBRARIES})
+endif()

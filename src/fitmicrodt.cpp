@@ -40,7 +40,7 @@
 #include "sarray.h"
 #include "version.h"
 
-static const char VERSION[] = R"(fitmicrodt )" STR(SMT_VERSION_STRING);
+static const char VERSION[] = R"(fitmicrodt)" " " STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
 Copyright (c) 2016 Enrico Kaden & University College London
@@ -111,6 +111,55 @@ smt::diffenc<float_t> read_diffenc(std::map<std::string, docopt::value>& args) {
 }
 
 template <typename float_t>
+smt::inifti<float_t, 4> read_graddev(std::map<std::string, docopt::value>& args) {
+	if(args["--graddev"] && args["--graddev"].asString() != "none") {
+		return smt::inifti<float_t, 4>(args["--graddev"].asString());
+	} else {
+		return smt::inifti<float_t, 4>();
+	}
+}
+
+template <typename float_t>
+smt::inifti<float_t, 3> read_mask(std::map<std::string, docopt::value>& args) {
+	if(args["--mask"] && args["--mask"].asString() != "none") {
+		return smt::inifti<float_t, 3>(args["--mask"].asString());
+	} else {
+		return smt::inifti<float_t, 3>();
+	}
+}
+
+template <typename float_t>
+std::tuple<float_t, smt::inifti<float_t, 3>> read_rician(std::map<std::string, docopt::value>& args) {
+	if(args["--rician"] && args["--rician"].asString() != "none") {
+		std::istringstream sin(args["--rician"].asString());
+		float_t scalar;
+		if(! (sin >> scalar)) {
+			return std::make_tuple(float_t(0), smt::inifti<float_t, 3>(args["--rician"].asString()));
+		} else {
+			return std::make_tuple(scalar, smt::inifti<float_t, 3>());
+		}
+	} else {
+		return std::make_tuple(float_t(0), smt::inifti<float_t, 3>());
+	}
+}
+
+template <typename float_t>
+float_t read_maxdiff(std::map<std::string, docopt::value>& args) {
+	if(args["--maxdiff"]) {
+		std::istringstream sin(args["--maxdiff"].asString());
+		float_t maxdiff;
+		if(! (sin >> maxdiff)) {
+			std::cerr << "ERROR: Unable to parse '" << args["--maxdiff"].asString() << "'." << std::endl;
+			std::exit(EXIT_FAILURE);
+		} else {
+			return maxdiff;
+		}
+	} else {
+		return float_t(3.05e-3);
+	}
+}
+
+template <typename float_t>
 smt::sarray<float_t, 3, 3> reshape_graddev(const smt::darray<float_t, 1>& g) {
 	insist(g.size(0) == 9);
 	smt::sarray<float_t, 3, 3> G;
@@ -139,12 +188,7 @@ int main(int argc, const char** argv) {
 		return EXIT_SUCCESS;
 	}
 
-	smt::nifti<float_t, 4> input(args["<input>"].asString(), true);
-
-	if(nifti_validfilename(args["<output>"].asString().c_str()) == 0) {
-		std::cerr << "ERROR: '" << args["<output>"].asString().c_str() << "' is not a valid NIfTI-1 file name." << std::endl;
-		return EXIT_FAILURE;
-	}
+	const smt::inifti<float_t, 4> input(args["<input>"].asString());
 
 	const smt::diffenc<float_t> dw = read_diffenc<float_t>(args);
 	if(input.size(3) != dw.mapping.size(0)) {
@@ -158,9 +202,8 @@ int main(int argc, const char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	smt::nifti<float_t, 4> graddev;
-	if(args["--graddev"] && args["--graddev"].asString() != "none") {
-		graddev.read(args["--graddev"].asString(), true);
+	const smt::inifti<float_t, 4> graddev = read_graddev<float_t>(args);
+	if(graddev) {
 		if(input.size(0) != graddev.size(0) || input.size(1) != graddev.size(1) || input.size(2) != graddev.size(2)) {
 			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
 			return EXIT_FAILURE;
@@ -169,64 +212,74 @@ int main(int argc, const char** argv) {
 			std::cerr << "ERROR: '" << args["--graddev"].asString() << "' does not contain nine volumes." << std::endl;
 			return EXIT_FAILURE;
 		}
+		if(input.pixsize(0) != graddev.pixsize(0) || input.pixsize(1) != graddev.pixsize(1) || input.pixsize(2) != graddev.pixsize(2)) {
+			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+		if(! input.has_equal_spatial_coords(graddev)) {
+			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
 	}
 
-	smt::nifti<float_t, 3> mask;
-	if(args["--mask"] && args["--mask"].asString() != "none") {
-		mask.read(args["--mask"].asString(), true);
+	const smt::inifti<float_t, 3> mask = read_mask<float_t>(args);
+	if(mask) {
 		if(input.size(0) != mask.size(0) || input.size(1) != mask.size(1) || input.size(2) != mask.size(2)) {
 			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
 			return EXIT_FAILURE;
 		}
-	}
-
-	float_t rician_scalar = 0;
-	smt::nifti<float_t, 3> rician_volume;
-	if(args["--rician"] && args["--rician"].asString() != "none") {
-		std::istringstream sin(args["--rician"].asString());
-		if(! (sin >> rician_scalar)) {
-			rician_volume.read(args["--rician"].asString(), true);
-			if(input.size(0) != rician_volume.size(0) || input.size(1) != rician_volume.size(1) || input.size(2) != rician_volume.size(2)) {
-				std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
-				return EXIT_FAILURE;
-			}
+		if(input.pixsize(0) != mask.pixsize(0) || input.pixsize(1) != mask.pixsize(1) || input.pixsize(2) != mask.pixsize(2)) {
+			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
 		}
-	}
-
-	float_t maxdiff = 3.05e-3;
-	if(args["--maxdiff"]) {
-		std::istringstream sin(args["--maxdiff"].asString());
-		if(! (sin >> maxdiff)) {
-			std::cerr << "ERROR: Unable to parse '" << args["--maxdiff"].asString() << "'." << std::endl;
+		if(! input.has_equal_spatial_coords(mask)) {
+			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
 			return EXIT_FAILURE;
 		}
 	}
 
-	bool b0 = args["--b0"].asBool();
+	const std::tuple<float_t, smt::inifti<float_t, 3>> rician = read_rician<float_t>(args);
+	if(std::get<1>(rician)) {
+		if(input.size(0) != std::get<1>(rician).size(0) || input.size(1) != std::get<1>(rician).size(1) || input.size(2) != std::get<1>(rician).size(2)) {
+			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+		if(input.pixsize(0) != std::get<1>(rician).pixsize(0) || input.pixsize(1) != std::get<1>(rician).pixsize(1) || input.pixsize(2) != std::get<1>(rician).pixsize(2)) {
+			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+		if(! input.has_equal_spatial_coords(std::get<1>(rician))) {
+			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	const float_t maxdiff = read_maxdiff<float_t>(args);
+
+	const bool b0 = args["--b0"].asBool();
 
 	// Processing
 
-	smt::darray<float, 4> output(input.size(0), input.size(1), input.size(2), 5);
-	const std::size_t output_size_0 = output.size(0);
-	const std::size_t output_size_1 = output.size(1);
-	const std::size_t output_size_2 = output.size(2);
-	#pragma omp parallel for schedule(dynamic, 10) collapse(3)
-	for(std::size_t ii = 0; ii < output_size_0; ++ii) {
-		for(std::size_t jj = 0; jj < output_size_1; ++jj) {
-			for(std::size_t kk = 0; kk < output_size_2; ++kk) {
+	// TODO: Separate NIfTI-1 output (e.g. <output>_diff_long.nii, <output>_diff_trans.nii, <output>_fa.nii, <output>_md.nii, <output>_b0.ni).
+	smt::onifti<float, 4> output = smt::onifti<float, 4>(args["<output>"].asString(), input, input.size(0), input.size(1), input.size(2), 6);
+
+	const std::size_t input_size_0 = input.size(0);
+	const std::size_t input_size_1 = input.size(1);
+	const std::size_t input_size_2 = input.size(2);
+#pragma omp parallel for schedule(dynamic, 10) collapse(3)
+	for(std::size_t kk = 0; kk < input_size_2; ++kk) {
+		for(std::size_t jj = 0; jj < input_size_1; ++jj) {
+			for(std::size_t ii = 0; ii < input_size_0; ++ii) {
 				if((! mask) || mask(ii, jj, kk) > 0) {
-					smt::darray<float_t, 1> input_tmp(input.size(3));
-					for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-						input_tmp(ll) = input(ii, jj, kk, ll);
-					}
-					if(rician_volume) {
+					smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
+					if(std::get<1>(rician)) {
 						for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-							input_tmp(ll) = smt::ricedebias(input_tmp(ll), rician_volume(ii, jj, kk));
+							input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<1>(rician)(ii, jj, kk));
 						}
 					} else {
-						if(rician_scalar > float_t(0)) {
+						if(std::get<0>(rician) > float_t(0)) {
 							for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-								input_tmp(ll) = smt::ricedebias(input_tmp(ll), rician_scalar);
+								input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<0>(rician));
 							}
 						}
 					}
@@ -234,39 +287,24 @@ int main(int argc, const char** argv) {
 					const smt::diffenc<float_t> dw_tmp = (graddev)?
 							smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
 
-					smt::sarray<float_t, 3> fitmicrodt_tmp = smt::fitmicrodt(input_tmp, dw_tmp, maxdiff, b0);
-					output.colmaj(ii, jj, kk, 0) = fitmicrodt_tmp(0);
-					output.colmaj(ii, jj, kk, 1) = fitmicrodt_tmp(1);
-					output.colmaj(ii, jj, kk, 2) = smt::microfa(fitmicrodt_tmp(0), fitmicrodt_tmp(1));
-					output.colmaj(ii, jj, kk, 3) = smt::micromd(fitmicrodt_tmp(0), fitmicrodt_tmp(1));
-					output.colmaj(ii, jj, kk, 4) = fitmicrodt_tmp(2);
+					const smt::sarray<float_t, 3> fit = smt::fitmicrodt(input_tmp, dw_tmp, maxdiff, b0);
+					output(ii, jj, kk, 0) = fit(0);
+					output(ii, jj, kk, 1) = fit(1);
+					output(ii, jj, kk, 2) = smt::microfa(fit(0), fit(1));
+					output(ii, jj, kk, 3) = std::pow(smt::microfa(fit(0), fit(1)), 3);
+					output(ii, jj, kk, 4) = smt::micromd(fit(0), fit(1));
+					output(ii, jj, kk, 5) = fit(2);
 				} else {
-					output.colmaj(ii, jj, kk, 0) = 0;
-					output.colmaj(ii, jj, kk, 1) = 0;
-					output.colmaj(ii, jj, kk, 2) = 0;
-					output.colmaj(ii, jj, kk, 3) = 0;
-					output.colmaj(ii, jj, kk, 4) = 0;
+					output(ii, jj, kk, 0) = 0;
+					output(ii, jj, kk, 1) = 0;
+					output(ii, jj, kk, 2) = 0;
+					output(ii, jj, kk, 3) = 0;
+					output(ii, jj, kk, 4) = 0;
+					output(ii, jj, kk, 5) = 0;
 				}
 			}
 		}
 	}
-
-	// Output
-
-	// TODO: Separate NIfTI-1 output (e.g. <output>_diff_long.nii, <output>_diff_trans.nii, <output>_fa.nii, <output>_md.nii, <output>_b0.ni).
-	smt::nifti<float, 4> output_nii;
-	output_nii.image = nifti_copy_nim_info(input.image);
-	nifti_set_filenames(output_nii.image, args["<output>"].asString().c_str(), 0, 0);
-	output_nii.image->nt = 5;
-	output_nii.image->dim[4] = 5;
-	output_nii.image->nvox = output_nii.image->nx*output_nii.image->ny*output_nii.image->nz*output_nii.image->nt;
-	output_nii.image->nbyper = 4;
-	output_nii.image->datatype = NIFTI_TYPE_FLOAT32;
-	output_nii.image->scl_slope = 0;
-	output_nii.image->scl_inter = 0;
-	output_nii.image->data = output.begin();
-	nifti_image_write(output_nii.image);
-	output_nii.image->data = nullptr;
 
 	return EXIT_SUCCESS;
 }

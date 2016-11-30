@@ -37,7 +37,7 @@
 #include "sarray.h"
 #include "version.h"
 
-static const char VERSION[] = R"(ricianfit )" STR(SMT_VERSION_STRING);
+static const char VERSION[] = R"(ricianfit)" " " STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
 Copyright (c) 2016 Enrico Kaden & University College London
@@ -83,6 +83,15 @@ Options:
   --version      Software version
 )";
 
+template <typename float_t>
+smt::inifti<float_t, 3> read_mask(std::map<std::string, docopt::value>& args) {
+	if(args["--mask"] && args["--mask"].asString() != "none") {
+		return smt::inifti<float_t, 3>(args["--mask"].asString());
+	} else {
+		return smt::inifti<float_t, 3>();
+	}
+}
+
 int main(int argc, const char** argv) {
 
 	typedef double float_t;
@@ -95,69 +104,53 @@ int main(int argc, const char** argv) {
 		return EXIT_SUCCESS;
 	}
 
-	smt::nifti<float_t, 4> input(args["<input>"].asString(), true);
+	const smt::inifti<float_t, 4> input(args["<input>"].asString());
 	if(input.size(3) < 2) {
 		std::cerr << "ERROR: '" << args["<input>"].asString() << "' includes less than two volumes." << std::endl;
 		return EXIT_FAILURE;
 	}
 
-	if(nifti_validfilename(args["<output>"].asString().c_str()) == 0) {
-		std::cerr << "ERROR: '" << args["<output>"].asString().c_str() << "' is not a valid NIfTI-1 file name." << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	smt::nifti<float_t, 3> mask;
-	if(args["--mask"] && args["--mask"].asString() != "none") {
-		mask.read(args["--mask"].asString(), true);
+	const smt::inifti<float_t, 3> mask = read_mask<float_t>(args);
+	if(mask) {
 		if(input.size(0) != mask.size(0) || input.size(1) != mask.size(1) || input.size(2) != mask.size(2)) {
 			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+		if(input.pixsize(0) != mask.pixsize(0) || input.pixsize(1) != mask.pixsize(1) || input.pixsize(2) != mask.pixsize(2)) {
+			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			return EXIT_FAILURE;
+		}
+		if(! input.has_equal_spatial_coords(mask)) {
+			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
 			return EXIT_FAILURE;
 		}
 	}
 
 	// Processing
 
-	smt::darray<float, 4> output(input.size(0), input.size(1), input.size(2), 2);
-	const std::size_t output_size_0 = output.size(0);
-	const std::size_t output_size_1 = output.size(1);
-	const std::size_t output_size_2 = output.size(2);
-	#pragma omp parallel for schedule(dynamic, 10) collapse(3)
-	for(std::size_t ii = 0; ii < output_size_0; ++ii) {
-		for(std::size_t jj = 0; jj < output_size_1; ++jj) {
-			for(std::size_t kk = 0; kk < output_size_2; ++kk) {
-				if((! mask) || mask(ii, jj, kk) > 0) {
-					smt::darray<float_t, 1> input_tmp(input.size(3));
-					for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-						input_tmp[ll] = input(ii, jj, kk, ll);
-					}
+	// TODO: Separate NIfTI-1 output (e.g. <output>_signal.nii and <output>_noise.nii).
+	smt::onifti<float, 4> output = smt::onifti<float, 4>(args["<output>"].asString(), input, input.size(0), input.size(1), input.size(2), 2);
 
-					smt::sarray<float_t, 2> ricianfit_tmp = smt::ricianfit(input_tmp);
-					output.colmaj(ii, jj, kk, 0) = ricianfit_tmp(0);
-					output.colmaj(ii, jj, kk, 1) = ricianfit_tmp(1);
+	const std::size_t input_size_0 = input.size(0);
+	const std::size_t input_size_1 = input.size(1);
+	const std::size_t input_size_2 = input.size(2);
+#pragma omp parallel for schedule(dynamic, 10) collapse(3)
+	for(std::size_t kk = 0; kk < input_size_2; ++kk) {
+		for(std::size_t jj = 0; jj < input_size_1; ++jj) {
+			for(std::size_t ii = 0; ii < input_size_0; ++ii) {
+				if((! mask) || mask(ii, jj, kk) > 0) {
+					smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
+
+					const smt::sarray<float_t, 2> fit = smt::ricianfit(input_tmp);
+					output(ii, jj, kk, 0) = fit(0);
+					output(ii, jj, kk, 1) = fit(1);
 				} else {
-					output.colmaj(ii, jj, kk, 0) = 0;
-					output.colmaj(ii, jj, kk, 1) = 0;
+					output(ii, jj, kk, 0) = 0;
+					output(ii, jj, kk, 1) = 0;
 				}
 			}
 		}
 	}
-
-	// Output
-
-	// TODO: Separate NIfTI-1 output (e.g. <output>_signal.nii and <output>_noise.nii).
-	smt::nifti<float, 4> output_nii;
-	output_nii.image = nifti_copy_nim_info(input.image);
-	nifti_set_filenames(output_nii.image, args["<output>"].asString().c_str(), 0, 0);
-	output_nii.image->nt = 2;
-	output_nii.image->dim[4] = 2;
-	output_nii.image->nvox = output_nii.image->nx*output_nii.image->ny*output_nii.image->nz*output_nii.image->nt;
-	output_nii.image->nbyper = 4;
-	output_nii.image->datatype = NIFTI_TYPE_FLOAT32;
-	output_nii.image->scl_slope = 0;
-	output_nii.image->scl_inter = 0;
-	output_nii.image->data = output.begin();
-	nifti_image_write(output_nii.image);
-	output_nii.image->data = nullptr;
 
 	return EXIT_SUCCESS;
 }
