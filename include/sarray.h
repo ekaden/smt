@@ -544,7 +544,7 @@ std::ostream& operator<<(std::ostream& s, const smt::sarray<T, S0>& rhs) {
 	s << "[";
 	if(rhs.size() > 0) {
 		for(std::size_t ii = 0; ii < rhs.size()-1; ++ii) {
-			s << rhs(ii) << ", ";
+			s << rhs[ii] << ", ";
 		}
 		s << rhs[rhs.size()-1];
 	}
