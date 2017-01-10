@@ -65,6 +65,12 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 * `--version` –– Software version
 
+### Environment variables
+
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+
+* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
+
 ## Microscopic diffusion tensor
 
 This microscopic model estimates the microscopic fractional anisotropy and other microscopic diffusion coefficients in tissue with complex directional architecture as in the brain.
@@ -114,6 +120,12 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 * `--version` –– Software version
 
+### Environment variables
+
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+
+* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
+
 ## Multi-compartment microscopic diffusion
 
 This model provides estimates of microscopic features specific to the intra- and extra-neurite compartments unconfounded by the effects of the potentially complex fibre orientation distribution.
@@ -161,6 +173,12 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 * `--license` –– License information
 
 * `--version` –– Software version
+
+### Environment variables
+
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+
+* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
 
 ## Citation
 

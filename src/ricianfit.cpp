@@ -34,6 +34,7 @@
 #include "darray.h"
 #include "fmt.h"
 #include "nifti.h"
+#include "progress.h"
 #include "ricianfit.h"
 #include "sarray.h"
 #include "version.h"
@@ -142,6 +143,7 @@ int main(int argc, const char** argv) {
 	const std::size_t input_size_0 = input.size(0);
 	const std::size_t input_size_1 = input.size(1);
 	const std::size_t input_size_2 = input.size(2);
+	smt::progress p{input_size_0*input_size_1*input_size_2, "ricianfit"};
 #pragma omp parallel for schedule(dynamic, 10) collapse(3)
 	for(std::size_t kk = 0; kk < input_size_2; ++kk) {
 		for(std::size_t jj = 0; jj < input_size_1; ++jj) {
@@ -166,6 +168,7 @@ int main(int argc, const char** argv) {
 						output(ii, jj, kk, 1) = 0;
 					}
 				}
+				++p;
 			}
 		}
 	}
