@@ -76,12 +76,12 @@ endif()
 
 find_package(Git)
 if(GIT_FOUND)
-    execute_process(
-            COMMAND ${GIT_EXECUTABLE} describe --tags
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            OUTPUT_VARIABLE SMT_VERSION_STRING
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    add_definitions(-DSMT_VERSION_STRING=${SMT_VERSION_STRING})
+	execute_process(
+			COMMAND ${GIT_EXECUTABLE} describe --tags
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			OUTPUT_VARIABLE SMT_VERSION_STRING
+			WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+	add_definitions(-DSMT_VERSION_STRING=${SMT_VERSION_STRING})
 endif()
 
 find_package(ZLIB)
@@ -94,7 +94,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/docopt.cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/niftilib/include")
 
-add_library(docopt SHARED docopt.cpp/src/docopt.cpp)
+add_library(docopt STATIC docopt.cpp/src/docopt.cpp)
 
 add_executable(ricianfit src/ricianfit.cpp)
 target_link_libraries(ricianfit docopt)
@@ -110,3 +110,18 @@ if(ZLIB_FOUND)
 	target_link_libraries(fitmicrodt ${ZLIB_LIBRARIES})
 	target_link_libraries(fitmcmicro ${ZLIB_LIBRARIES})
 endif()
+
+install(TARGETS ricianfit fitmicrodt fitmcmicro DESTINATION bin)
+install(FILES README.md LICENSE.md THIRDPARTY.md DESTINATION .)
+
+if(GIT_FOUND)
+	string(REGEX REPLACE "^v" "" SMT_PACKAGE_VERSION ${SMT_VERSION_STRING})
+else()
+	set(SMT_PACKAGE_VERSION "unknown")
+endif()
+
+set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
+set(CPACK_PACKAGE_VERSION "${SMT_PACKAGE_VERSION}")
+set(CPACK_GENERATOR "TGZ;ZIP")
+
+include(CPack)
