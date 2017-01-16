@@ -34,6 +34,7 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <thread>
 
