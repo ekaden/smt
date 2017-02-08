@@ -38,6 +38,7 @@
 #include <iterator>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include <sys/mman.h>
 #ifdef ZLIB_FOUND
@@ -520,6 +521,30 @@ public:
 
 	inifti(const std::string& filename): inifti(smt::niftiname(filename)) {
 	}
+
+	inifti(const inifti&) = delete;
+
+	inifti(inifti&& rhs):
+		_gzipped(std::move(rhs._gzipped)),
+		_separate_storage(std::move(rhs._separate_storage)),
+		_hdrname(std::move(rhs._hdrname)),
+		_imgname(std::move(rhs._imgname)) {
+#ifdef ZLIB_FOUND
+		_fd = std::move(rhs._fd);
+		_zin = std::move(rhs._zin);
+#else
+		_fin = std::move(rhs._fin);
+#endif
+		_header = std::move(rhs._header);
+		_data = std::move(rhs._data);
+		rhs._data = nullptr;
+		_mmapped = std::move(rhs._mmapped);
+		_readfun = std::move(rhs._readfun);
+	}
+
+	inifti& operator=(const inifti&) = delete;
+
+	inifti& operator=(inifti&&) = delete;
 
 	explicit operator bool() const {
 		return _data != nullptr;
