@@ -96,6 +96,9 @@ include_directories("${PROJECT_SOURCE_DIR}/niftilib/include")
 
 add_library(docopt STATIC docopt.cpp/src/docopt.cpp)
 
+add_executable(gaussianfit src/gaussianfit.cpp)
+target_link_libraries(gaussianfit docopt)
+
 add_executable(ricianfit src/ricianfit.cpp)
 target_link_libraries(ricianfit docopt)
 
@@ -106,12 +109,13 @@ add_executable(fitmcmicro src/fitmcmicro.cpp)
 target_link_libraries(fitmcmicro docopt)
 
 if(ZLIB_FOUND)
+	target_link_libraries(gaussianfit ${ZLIB_LIBRARIES})
 	target_link_libraries(ricianfit ${ZLIB_LIBRARIES})
 	target_link_libraries(fitmicrodt ${ZLIB_LIBRARIES})
 	target_link_libraries(fitmcmicro ${ZLIB_LIBRARIES})
 endif()
 
-install(TARGETS ricianfit fitmicrodt fitmcmicro DESTINATION bin)
+install(TARGETS gaussianfit ricianfit fitmicrodt fitmcmicro DESTINATION bin)
 install(FILES README.md LICENSE.md THIRDPARTY.md DESTINATION .)
 
 if(GIT_FOUND)

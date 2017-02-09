@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <ostream>
 #include <type_traits>
 
@@ -58,6 +59,11 @@ public:
 	typedef const T& const_reference;
 
 	sarray() {}
+
+	sarray(const std::initializer_list<T>& rhs) {
+		insist(rhs.size() == S0);
+		std::copy(rhs.begin(), rhs.end(), begin());
+	}
 
 	template <typename RHS>
 	sarray(const RHS& rhs) {
