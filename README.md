@@ -2,6 +2,13 @@
 
 The [Spherical Mean Technique (SMT)](http://dx.doi.org/10.1002/mrm.25734) is a clinically feasible method for microscopic diffusion anisotropy imaging. The purpose is to map microscopic features unconfounded by the effects of fibre crossings and orientation dispersion, which are ubiquitous in the brain. This technique requires only an off-the-shelf diffusion sequence with two (or more) b-shells achievable on any standard MRI scanner, thus facilitating its widespread use in neuroscience research and clinical neurology. So far, SMT comes in two flavours, a microscopic tensor model and a simple multi-compartment model. This software was developed and is maintained by [Enrico Kaden](https://ekaden.github.io) from University College London.
 
+## Installing
+
+Prebuilt SMT binaries are available for 64-bit Linux systems:
+* Download the latest [SMT release](https://github.com/ekaden/smt/releases/latest).
+* Unpack the software archive.
+* Set the path variable using `export PATH="/path/to/smt/bin:${PATH}"` (in bash) or `setenv PATH "/path/to/smt/bin:${PATH}"` (in csh).
+
 ## Building
 
 SMT requires the following software (tested under Ubuntu Linux 14.04 LTS):
