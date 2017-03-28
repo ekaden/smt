@@ -62,7 +62,7 @@ public:
 			std::cerr << "ERROR: '" << filename_bvals << "' has diffusion weighting factors which are not non-negative."  << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
-		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+		if(! has_normalised_gradients(100*std::numeric_limits<float>::epsilon())) {
 			std::cerr << "ERROR: '" << filename_bvecs << "' has diffusion gradient directions which are not normalised."  << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
@@ -75,7 +75,7 @@ public:
 			std::cerr << "ERROR: '" << filename << "' has diffusion weighting factors which are not non-negative."  << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
-		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+		if(! has_normalised_gradients(100*std::numeric_limits<float>::epsilon())) {
 			std::cerr << "ERROR: '" << filename << "' has diffusion gradient directions which are not normalised."  << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
