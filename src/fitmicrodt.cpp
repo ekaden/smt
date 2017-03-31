@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 static const char VERSION[] = R"(fitmicrodt)" " " STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
-Copyright (c) 2016 Enrico Kaden & University College London
+Copyright (c) 2016-2017 Enrico Kaden & University College London
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const char USAGE[] = R"(
 MICROSCOPIC DIFFUSION TENSOR IMAGING (SPHERICAL MEAN TECHNIQUE)
 
-Copyright (c) 2016 Enrico Kaden & University College London
+Copyright (c) 2016-2017 Enrico Kaden & University College London
 
 If you use this software, please cite:
   Kaden E, Kruggel F, and Alexander DC: Quantitative Mapping of the Per-Axon

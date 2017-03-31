@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 static const char VERSION[] = R"(ricianfit)" " " STR(SMT_VERSION_STRING);
 
 static const char LICENSE[] = R"(
-Copyright (c) 2016 Enrico Kaden & University College London
+Copyright (c) 2016-2017 Enrico Kaden & University College London
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const char USAGE[] = R"(
 RICIAN NOISE ESTIMATION
 
-Copyright (c) 2016 Enrico Kaden & University College London
+Copyright (c) 2016-2017 Enrico Kaden & University College London
 
 Usage:
   ricianfit [options] <input> <output>
