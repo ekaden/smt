@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -298,22 +298,22 @@ public:
 	}
 
 	reference back() {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	const_reference back() const {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	reference operator[](const size_type& ii) {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
 	const_reference operator[](const size_type& ii) const {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
@@ -327,56 +327,56 @@ public:
 
 	reference operator()(const size_type& i0) {
 		static_assert(D == 1, "D == 1");
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	reference colmaj(const size_type& i0) {
 		static_assert(D == 1, "D == 1");
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	const_reference operator()(const size_type& i0) const {
 		static_assert(D == 1, "D == 1");
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	const_reference colmaj(const size_type& i0) const {
 		static_assert(D == 1, "D == 1");
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	reference operator()(const size_type& i0, const size_type& i1) {
 		static_assert(D == 2, "D == 2");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0*size(1)+i1];
 	}
 
 	reference colmaj(const size_type& i0, const size_type& i1) {
 		static_assert(D == 2, "D == 2");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0+size(0)*i1];
 	}
 
 	const_reference operator()(const size_type& i0, const size_type& i1) const {
 		static_assert(D == 2, "D == 2");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0*size(1)+i1];
 	}
 
 	const_reference colmaj(const size_type& i0, const size_type& i1) const {
 		static_assert(D == 2, "D == 2");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0+size(0)*i1];
 	}
 
 	reference operator()(const size_type& i0, const size_type& i1,
 			const size_type& i2) {
 		static_assert(D == 3, "D == 3");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2));
 		return _data[(i0*size(1)+i1)*size(2)+i2];
 	}
@@ -384,7 +384,7 @@ public:
 	reference colmaj(const size_type& i0, const size_type& i1,
 			const size_type& i2) {
 		static_assert(D == 3, "D == 3");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2));
 		return _data[i0+size(0)*(i1+size(1)*i2)];
 	}
@@ -392,7 +392,7 @@ public:
 	const_reference operator()(const size_type& i0, const size_type& i1,
 			const size_type& i2) const {
 		static_assert(D == 3, "D == 3");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2));
 		return _data[(i0*size(1)+i1)*size(2)+i2];
 	}
@@ -400,7 +400,7 @@ public:
 	const_reference colmaj(const size_type& i0, const size_type& i1,
 			const size_type& i2) const {
 		static_assert(D == 3, "D == 3");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2));
 		return _data[i0+size(0)*(i1+size(1)*i2)];
 	}
@@ -408,7 +408,7 @@ public:
 	reference operator()(const size_type& i0, const size_type& i1,
 			const size_type& i2, const size_type& i3) {
 		static_assert(D == 4, "D == 4");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2) && 0 <= i3 && i3 < size(3));
 		return _data[((i0*size(1)+i1)*size(2)+i2)*size(3)+i3];
 	}
@@ -416,7 +416,7 @@ public:
 	reference colmaj(const size_type& i0, const size_type& i1,
 			const size_type& i2, const size_type& i3) {
 		static_assert(D == 4, "D == 4");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2) && 0 <= i3 && i3 < size(3));
 		return _data[i0+size(0)*(i1+size(1)*(i2+size(2)*i3))];
 	}
@@ -424,7 +424,7 @@ public:
 	const_reference operator()(const size_type& i0, const size_type& i1,
 			const size_type& i2, const size_type& i3) const {
 		static_assert(D == 4, "D == 4");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2) && 0 <= i3 && i3 < size(3));
 		return _data[((i0*size(1)+i1)*size(2)+i2)*size(3)+i3];
 	}
@@ -432,7 +432,7 @@ public:
 	const_reference colmaj(const size_type& i0, const size_type& i1,
 			const size_type& i2, const size_type& i3) const {
 		static_assert(D == 4, "D == 4");
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1)
 				&& 0 <= i2 && i2 < size(2) && 0 <= i3 && i3 < size(3));
 		return _data[i0+size(0)*(i1+size(1)*(i2+size(2)*i3))];
 	}
@@ -542,7 +542,7 @@ public:
 	}
 
 	size_type size(const size_type& ii) const {
-		insist(0 <= ii && ii < D);
+		smt::assert(0 <= ii && ii < D);
 		return _size[ii];
 	}
 

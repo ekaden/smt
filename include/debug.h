@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,32 +29,45 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <string>
+
+#include "env.h"
+#include "tty.h"
+
+namespace smt {
+
+namespace {
+
+bool debug() {
+	const std::string val{smt::getenv("SMT_DEBUG")};
+	if(val == "true" || val == "True" || val == "TRUE" || std::atoi(val.c_str()) > 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+} // (anonymous)
 
 #ifdef NDEBUG
-#define insist(test)
+void assert_noimpl() {}
+
+#define assert(test) assert_noimpl()
 #else
+void assert_impl(const bool& test, const std::string& s, const std::string& file, const long int& line, const std::string& function) {
+	if(! test) {
 #ifdef mex_h
-#define insist(test) if(! (test)) { \
-		mexPrintAssertion(#test, __FILE__, __LINE__, NULL); \
-	}
+		mexPrintAssertion(s.c_str(), file.c_str(), line.c_str(), nullptr);
 #else
-#define insist(test) if(! (test)) { \
-		std::cerr << __FILE__ << ":" << __LINE__ << ": In function ‘" << __PRETTY_FUNCTION__ << "’: Insistence \"" \
-				<< #test \
-				<< "\" failed." << std::endl; \
-		std::exit(EXIT_FAILURE); \
-	}
+		std::cerr << smt::colour::red << "*** ERROR: " << file << ":" << line << ": In function ‘" << function << "’: Assertion ‘" << s << "’ failed." << smt::colour::reset << std::endl;
+		std::exit(EXIT_FAILURE);
 #endif // mex_h
+	}
+}
+
+#define assert(test) assert_impl((test), #test, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 #endif // NDEBUG
 
-#ifdef NDEBUG
-#define remark(message)
-#else
-#define remark(message) { \
-		std::clog << __FILE__ << ":" << __LINE__ << ": In function ‘" << __PRETTY_FUNCTION__ << "’: " \
-				<< message \
-				<< std::endl; \
-	}
-#endif // NDEBUG
+} // smt
 
 #endif // _DEBUG_H

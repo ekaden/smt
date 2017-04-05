@@ -33,6 +33,7 @@
 #include "docopt.h"
 
 #include "darray.h"
+#include "debug.h"
 #include "diffenc.h"
 #include "fitmcmicro.h"
 #include "fmt.h"
@@ -163,7 +164,7 @@ float_t read_maxdiff(std::map<std::string, docopt::value>& args) {
 
 template <typename float_t>
 smt::sarray<float_t, 3, 3> reshape_graddev(const smt::darray<float_t, 1>& g) {
-	insist(g.size(0) == 9);
+	smt::assert(g.size(0) == 9);
 	smt::sarray<float_t, 3, 3> G;
 	G(0, 0) = g(0);
 	G(1, 0) = g(1);

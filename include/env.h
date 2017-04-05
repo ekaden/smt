@@ -24,23 +24,23 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef _PROJECT_H
-#define _PROJECT_H
+#ifndef _ENV_H
+#define _ENV_H
 
-#include <cmath>
-
-#include "debug.h"
+#include <cstdlib>
+#include <string>
 
 namespace smt {
 
-template <typename T>
-T project(const T& x, const T& min, const T& max) {
-	
-	smt::assert(min < max);
-	
-	return (x < min)? min : ((max < x)? max : x);
+std::string getenv(const std::string& var) {
+	const char* s = std::getenv(var.c_str());
+	if(s == nullptr) {
+		return {};
+	} else {
+		return std::string{s};
+	}
 }
 
 } // smt
 
-#endif // _PROJECT_H
+#endif // _ENV_H

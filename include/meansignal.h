@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 #define _MEANSIGNAL_H
 
 #include <cmath>
+#include <limits>
 
 #include "debug.h"
 
@@ -53,8 +54,10 @@ float_t meansignal(const float_t bvalue, const float_t lambda1, const float_t la
 	} else if(lambda1 < lambda2) {
 		return meansignal(bvalue, lambda2, lambda1);
 	} else {
-		insist(false);
+		smt::assert(false);
 	}
+
+	return std::numeric_limits<float_t>::quiet_NaN(); // unreachable
 }
 
 } // smt

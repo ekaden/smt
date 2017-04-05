@@ -61,7 +61,7 @@ public:
 	sarray() {}
 
 	sarray(const std::initializer_list<T>& rhs) {
-		insist(rhs.size() == S0);
+		smt::assert(rhs.size() == S0);
 		std::copy(rhs.begin(), rhs.end(), begin());
 	}
 
@@ -206,22 +206,22 @@ public:
 	}
 
 	reference back() {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	const_reference back() const {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	reference operator[](const size_type& ii) {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
 	const_reference operator[](const size_type& ii) const {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
@@ -234,22 +234,22 @@ public:
 	}
 
 	reference operator()(const size_type& i0) {
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	reference colmaj(const size_type& i0) {
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	const_reference operator()(const size_type& i0) const {
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
 	const_reference colmaj(const size_type& i0) const {
-		insist(0 <= i0 && i0 < size(0));
+		smt::assert(0 <= i0 && i0 < size(0));
 		return _data[i0];
 	}
 
@@ -258,7 +258,7 @@ public:
 	}
 
 	size_type size(const size_type& ii) const {
-		insist(0 <= ii && ii < 1);
+		smt::assert(0 <= ii && ii < 1);
 		return S0;
 	}
 
@@ -402,22 +402,22 @@ public:
 	}
 
 	reference back() {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	const_reference back() const {
-		insist(0 < size());
+		smt::assert(0 < size());
 		return _data[size()-1];
 	}
 
 	reference operator[](const size_type& ii) {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
 	const_reference operator[](const size_type& ii) const {
-		insist(0 <= ii && ii < size());
+		smt::assert(0 <= ii && ii < size());
 		return _data[ii];
 	}
 
@@ -430,22 +430,22 @@ public:
 	}
 
 	reference operator()(const size_type& i0, const size_type& i1) {
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0*size(1)+i1];
 	}
 
 	reference colmaj(const size_type& i0, const size_type& i1) {
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0+size(0)*i1];
 	}
 
 	const_reference operator()(const size_type& i0, const size_type& i1) const {
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0*size(1)+i1];
 	}
 
 	const_reference colmaj(const size_type& i0, const size_type& i1) const {
-		insist(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
+		smt::assert(0 <= i0 && i0 < size(0) && 0 <= i1 && i1 < size(1));
 		return _data[i0+size(0)*i1];
 	}
 
@@ -454,7 +454,7 @@ public:
 	}
 
 	size_type size(const size_type& ii) const {
-		insist(0 <= ii && ii < 2);
+		smt::assert(0 <= ii && ii < 2);
 		return (ii == 0)? S0 : S1;
 	}
 

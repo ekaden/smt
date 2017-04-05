@@ -43,21 +43,9 @@
 #endif
 
 #include "darray.h"
+#include "env.h"
 
 namespace smt {
-
-namespace {
-
-std::string getenv(const std::string& var) {
-	const char* tmp = std::getenv(var.c_str());
-	if(tmp == nullptr) {
-		return {};
-	} else {
-		return std::string(tmp);
-	}
-}
-
-} // (anonymous)
 
 class progress {
 public:
@@ -132,7 +120,7 @@ private:
 
 	bool verbose() const {
 		const std::string val{smt::getenv("SMT_QUIET")};
-		if(val == "true" || val == "TRUE" || std::atoi(val.c_str()) > 0) {
+		if(val == "true" || val == "True" || val == "TRUE" || std::atoi(val.c_str()) > 0) {
 			return false;
 		} else {
 			return true;

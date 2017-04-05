@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -125,7 +125,7 @@ private:
 				++n;
 			}
 		}
-		insist(n > 0);
+		smt::assert(n > 0);
 		y0 /= n;
 
 		return y0;

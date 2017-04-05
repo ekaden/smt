@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,7 @@ private:
 	}
 
 	float_t meansignal() const {
-		insist(_y.size() > 0);
+		smt::assert(_y.size() > 0);
 
 		float_t y_mean = 0;
 		for(std::size_t ii = 0; ii < _y.size(); ++ii) {
@@ -102,7 +102,7 @@ private:
 	}
 
 	float_t stdsignal(const float_t& mean) const {
-		insist(_y.size() > 0);
+		smt::assert(_y.size() > 0);
 
 		float_t y_std = 0;
 		for(std::size_t ii = 0; ii < _y.size(); ++ii) {

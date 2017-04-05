@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@ float ricedebias(float x, float sigma) {
 			-0.0277546919204136305245f,
 			0.101693239387338638145f};
 
-	insist(sigma > 0.0f);
+	smt::assert(sigma > 0.0f);
 	x /= sigma;
 
 	if(x <= sqrt_m_pi_2) {
@@ -188,7 +188,7 @@ double ricedebias(double x, double sigma) {
 			-0.0277546919204136305245,
 			0.101693239387338638145};
 
-	insist(sigma > 0.0);
+	smt::assert(sigma > 0.0);
 	x /= sigma;
 
 	if(x <= sqrt_m_pi_2) {
