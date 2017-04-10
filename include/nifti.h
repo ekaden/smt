@@ -101,7 +101,7 @@ std::size_t nifti_bytesize(const short& datatype) {
 	case NIFTI_TYPE_COMPLEX256:
 		return sizeof(std::complex<long double>);
 	default:
-		std::cerr << "ERROR: Unable to read/write NIfTI-1 data type." << std::endl;
+		smt::error("Unable to read/write NIfTI-1 data type.");
 		std::exit(EXIT_FAILURE);
 	}
 	return 0; // unreachable
@@ -109,7 +109,7 @@ std::size_t nifti_bytesize(const short& datatype) {
 
 template <typename T>
 short nifti_datatype() {
-	std::cerr << "ERROR: Unable to write NIfTI-1 data type." << std::endl;
+	smt::error("Unable to write NIfTI-1 data type.");
 	std::exit(EXIT_FAILURE);
 }
 
@@ -140,7 +140,7 @@ DEFINE_NIFTI_DATATYPE(std::complex<long double>, NIFTI_TYPE_COMPLEX256)
 
 template <typename input_t, typename output_t, bool scaling>
 output_t nifti_readfun(const std::size_t& ii, const unsigned char* data, const float& slope = 1.0f, const float& offset = 0.0f) {
-	std::cerr << "ERROR: Unable to read NIfTI-1 data type." << std::endl;
+	smt::error("Unable to read NIfTI-1 data type.");
 	std::exit(EXIT_FAILURE);
 }
 
@@ -480,7 +480,7 @@ std::tuple<bool, bool, std::string, std::string> niftiname(const std::string& fi
 			return std::make_tuple(true, false, filename, filename);
 		}
 #else
-		std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+		smt::error("Built without support for gzip format.");
 		std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 	} else {
@@ -621,12 +621,12 @@ public:
 			if(_mmapped) {
 				if(_separate_storage) {
 					if(munmap(_data-std::max(0L, offset()), bytesize()*size()+std::max(0L, offset())) != 0) {
-						std::cerr << "ERROR: Unable to munmap " << _imgname << "." << std::endl;
+						smt::error("Unable to munmap ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				} else {
 					if(munmap(_data-std::max(352L, offset()), bytesize()*size()+std::max(352L, offset())) != 0) {
-						std::cerr << "ERROR: Unable to munmap " << _imgname << "." << std::endl;
+						smt::error("Unable to munmap ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
@@ -635,12 +635,12 @@ public:
 			}
 #ifdef ZLIB_FOUND
 			if(_fd != smt::fileno(stdin) && gzclose(_zin) != 0) {
-				std::cerr << "ERROR: Unable to close " << _imgname << "." << std::endl;
+				smt::error("Unable to close ‘" + _imgname + "’.");
 				std::exit(EXIT_FAILURE);
 			}
 #else
 			if(_fin != ::stdin && std::fclose(_fin) != 0) {
-				std::cerr << "ERROR: Unable to close " << _imgname << "." << std::endl;
+				smt::error("Unable to close ‘" + _imgname + "’.");
 				std::exit(EXIT_FAILURE);
 			}
 #endif // ZLIB_FOUND
@@ -670,48 +670,48 @@ private:
 			_imgname(std::get<3>(niftiname)) {
 #ifdef ZLIB_FOUND
 		if((_fd = (_hdrname == "-")? smt::fileno(stdin) : smt::fileno(std::fopen(_hdrname.c_str(), "rb"))) < 0 || (_zin = gzdopen(_fd, "rb")) == nullptr) {
-			std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+			smt::error("Unable to open ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 		if(gzread(_zin, &_header, sizeof(nifti_1_header)) != sizeof(nifti_1_header)) {
-			std::cerr << "ERROR: Unable to read " << _hdrname << "." << std::endl;
+			smt::error("Unable to read ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 #else
 		if((_fin = (_hdrname == "-")? ::stdin : std::fopen(_hdrname.c_str(), "rb")) == nullptr) {
-			std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+			smt::error("Unable to open ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 		if(fread(&_header, sizeof(nifti_1_header), 1, _fin) != 1) {
-			std::cerr << "ERROR: Unable to read " << _hdrname << "." << std::endl;
+			smt::error("Unable to read ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 #endif // ZLIB_FOUND
 
 		if(_separate_storage) {
 			if(! has_magic_flag("ni1")) {
-				std::cerr << "ERROR: " << _hdrname << " not in NIfTI-1 format." << std::endl;
+				smt::error("‘" + _hdrname + "’ not in NIfTI-1 format.");
 				std::exit(EXIT_FAILURE);
 			}
 		} else {
 			if(! has_magic_flag("n+1")) {
-				std::cerr << "ERROR: " << _hdrname << " not in NIfTI-1 format." << std::endl;
+				smt::error("‘" + _hdrname + "’ not in NIfTI-1 format.");
 				std::exit(EXIT_FAILURE);
 			}
 		}
 
 		if(change_endianness()) {
-			std::cerr << "ERROR: Change of endianness in " << _hdrname << " not supported." << std::endl;
+			smt::error("Change of endianness in ‘" + _hdrname + "’ not supported.");
 			std::exit(EXIT_FAILURE);
 		}
 
 		if(ndims() != D) {
-			std::cerr << "ERROR: Number of dimensions in " << _hdrname << " not supported." << std::endl;
+			smt::error("Number of dimensions in ‘" + _hdrname + "’ not supported.");
 			std::exit(EXIT_FAILURE);
 		}
 
 		if(! has_valid_size()) {
-			std::cerr << "ERROR: Dimensions in " << _hdrname << " not non-negative." << std::endl;
+			smt::error("Dimensions in ‘" + _hdrname + "’ not non-negative.");
 			std::exit(EXIT_FAILURE);
 		}
 
@@ -719,49 +719,49 @@ private:
 			if(_separate_storage) {
 #ifdef ZLIB_FOUND
 				if(gzclose(_zin) != 0) {
-					std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+					smt::error("Unable to close ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if((_fd = smt::fileno(std::fopen(_imgname.c_str(), "rb"))) < 0 || (_zin = gzdopen(_fd, "rb")) == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if(gzskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
 				if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-					std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+					smt::error("Unable to allocate memory.");
 					std::exit(EXIT_FAILURE);
 				}
 				if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				_mmapped = false;
 #else
-				std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+				smt::error("Built without support for gzip format.");
 				std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 			} else {
 #ifdef ZLIB_FOUND
 				if(gzskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
 				if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-					std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+					smt::error("Unable to allocate memory.");
 					std::exit(EXIT_FAILURE);
 				}
 				if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				_mmapped = false;
 #else
-				std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+				smt::error("Built without support for gzip format.");
 				std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 			}
@@ -769,15 +769,15 @@ private:
 			if(_separate_storage) {
 #ifdef ZLIB_FOUND
 				if(gzclose(_zin) != 0) {
-					std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+					smt::error("Unable to close ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if((_fd = smt::fileno(std::fopen(_imgname.c_str(), "rb"))) < 0 || (_zin = gzdopen(_fd, "rb")) == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if(gzskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
@@ -785,25 +785,25 @@ private:
 					_data += std::max(0L, offset());
 				} else {
 					if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-						std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
-						std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
 #else
 				if(std::fclose(_fin) != 0) {
-					std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+					smt::error("Unable to close ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if((_fin = fopen(_imgname.c_str(), "rb")) == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				if(fskip(_fin, std::max(0L, offset())) != std::max(0L, offset())) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
@@ -811,11 +811,11 @@ private:
 					_data += std::max(0L, offset());
 				} else {
 					if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-						std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(std::fread(_data, bytesize(), size(), _fin) != size()) {
-						std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
@@ -823,24 +823,24 @@ private:
 			} else {
 #ifdef ZLIB_FOUND
 				if(gzskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
 				if((_mmapped = ((_data = static_cast<unsigned char*>(mmap(0, bytesize()*size()+std::max(352L, offset()), PROT_READ, MAP_SHARED, _fd, 0))) != MAP_FAILED))) {
 					if(std::memcmp(&_header, _data, 348L) != 0) {
 						if(munmap(_data, bytesize()*size()+std::max(352L, offset())) != 0) {
-							std::cerr << "ERROR: Unable to munmap " << _imgname << "." << std::endl;
+							smt::error("Unable to munmap ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 						_mmapped = false;
 
 						if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-							std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+							smt::error("Unable to allocate memory.");
 							std::exit(EXIT_FAILURE);
 						}
 						if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
-							std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+							smt::error("Unable to read ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 					} else {
@@ -848,17 +848,17 @@ private:
 					}
 				} else {
 					if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-						std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
-						std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
 #else
 				if(fskip(_fin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
-					std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 
@@ -866,11 +866,11 @@ private:
 					_data += std::max(352L, offset());
 				} else {
 					if((_data = new unsigned char[bytesize()*size()]) == nullptr) {
-						std::cerr << "ERROR: Unable to allocate memory." << std::endl;
+						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(std::fread(_data, bytesize(), size(), _fin) != size()) {
-						std::cerr << "ERROR: Unable to read " << _imgname << "." << std::endl;
+						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
@@ -930,7 +930,7 @@ private:
 			DEFINE_NIFTI_READFUN(std::complex<long double>)
 			break;
 		default:
-			std::cerr << "ERROR: Unable to read NIfTI-1 data type." << std::endl;
+			smt::error("Unable to read NIfTI-1 data type.");
 			std::exit(EXIT_FAILURE);
 			break;
 		}
@@ -1051,65 +1051,65 @@ public:
 #ifdef ZLIB_FOUND
 					gzFile zout = gzopen(_hdrname.c_str(), "wb");
 					if(zout == nullptr) {
-						std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_header), sizeof(_header)) != sizeof(_header)) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender)) != sizeof(_extender)) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzclose(zout) != 0) {
-						std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+						smt::error("Unable to close ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 
 					zout = gzopen(_imgname.c_str(), "wb");
 					if(zout == nullptr) {
-						std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+						smt::error("Unable to open ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(_data.begin()), _data.size()*sizeof(T)) != _data.size()*sizeof(T)) {
-						std::cerr << "ERROR: Unable to write " << _imgname << "." << std::endl;
+						smt::error("Unable to write ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzclose(zout) != 0) {
-						std::cerr << "ERROR: Unable to close " << _imgname << "." << std::endl;
+						smt::error("Unable to close ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 #else
-					std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+					smt::error("Built without support for gzip format.");
 					std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 				} else {
 #ifdef ZLIB_FOUND
 					gzFile zout = gzopen(_hdrname.c_str(), "wb");
 					if(zout == nullptr) {
-						std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_header), sizeof(_header)) != sizeof(_header)) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender)) != sizeof(_extender)) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 
 					if(gzwrite(zout, reinterpret_cast<unsigned char*>(_data.begin()), _data.size()*sizeof(T)) != _data.size()*sizeof(T)) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(gzclose(zout) != 0) {
-						std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+						smt::error("Unable to close ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 #else
-				std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+				smt::error("Built without support for gzip format.");
 				std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 				}
@@ -1117,67 +1117,67 @@ public:
 				if(_separate_storage) {
 					if(_mmapped) {
 						if(munmap(reinterpret_cast<unsigned char*>(_data.begin())-std::max(0L, offset()), bytesize()*size()+std::max(0L, offset())) != 0) {
-							std::cerr << "ERROR: Unable to munmap " << _imgname << "." << std::endl;
+							smt::error("Unable to munmap ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 						if(std::fclose(_fout) != 0) {
-							std::cerr << "ERROR: Unable to close " << _imgname << "." << std::endl;
+							smt::error("Unable to close ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 					} else {
 						if(std::fwrite(reinterpret_cast<unsigned char*>(_data.begin()), sizeof(T), _data.size(), _fout) != _data.size()) {
-							std::cerr << "ERROR: Unable to write " << _imgname << "." << std::endl;
+							smt::error("Unable to write ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 						if(std::fclose(_fout) != 0) {
-							std::cerr << "ERROR: Unable to close " << _imgname << "." << std::endl;
+							smt::error("Unable to close ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 					}
 
 					_fout = fopen(_hdrname.c_str(), "wb");
 					if(_fout == nullptr) {
-						std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(fclose(_fout) != 0) {
-						std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+						smt::error("Unable to close ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				} else {
 					if(fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 					if(fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
-						std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 
 					if(_mmapped) {
 						if(munmap(reinterpret_cast<unsigned char*>(_data.begin())-std::max(352L, offset()), bytesize()*size()+std::max(352L, offset())) != 0) {
-							std::cerr << "ERROR: Unable to munmap " << _hdrname << "." << std::endl;
+							smt::error("Unable to munmap ‘" + _hdrname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 						if(std::fclose(_fout) != 0) {
-							std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+							smt::error("Unable to close ‘" + _hdrname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 					} else {
 						if(std::fwrite(reinterpret_cast<unsigned char*>(_data.begin()), sizeof(T), _data.size(), _fout) != _data.size()) {
-							std::cerr << "ERROR: Unable to write " << _hdrname << "." << std::endl;
+							smt::error("Unable to write ‘" + _hdrname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 						if(_fout != ::stdout && std::fclose(_fout) != 0) {
-							std::cerr << "ERROR: Unable to close " << _hdrname << "." << std::endl;
+							smt::error("Unable to close ‘" + _hdrname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
 					}
@@ -1211,7 +1211,7 @@ private:
 
 		_header = default_header(like._header);
 		if(s0 > std::numeric_limits<signed short>::max() || s1 > std::numeric_limits<signed short>::max() || s2 > std::numeric_limits<signed short>::max()) {
-			std::cerr << "ERROR: Data size not supported by NIfTI-1 format." << std::endl;
+			smt::error("Data size not supported by NIfTI-1 format.");
 			std::exit(EXIT_FAILURE);
 		}
 		_header.dim[1] = s0;
@@ -1226,14 +1226,14 @@ private:
 			_fout = nullptr;
 			_mmapped = false;
 #else
-			std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+			smt::error("Built without support for gzip format.");
 			std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 		} else {
 			if(_separate_storage) {
 				_fout = fopen(_imgname.c_str(), "wb");
 				if(_fout == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				unsigned char* tmp = nullptr;
@@ -1245,7 +1245,7 @@ private:
 			} else {
 				_fout = (_hdrname == "-")? ::stdout : std::fopen(_hdrname.c_str(), "wb");
 				if(_fout == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+					smt::error("Unable to open ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				unsigned char* tmp = nullptr;
@@ -1273,7 +1273,7 @@ private:
 
 		_header = default_header(like._header);
 		if(s0 > std::numeric_limits<signed short>::max() || s1 > std::numeric_limits<signed short>::max() || s2 > std::numeric_limits<signed short>::max() || s3 > std::numeric_limits<signed short>::max()) {
-			std::cerr << "ERROR: Data size not supported by NIfTI-1 format." << std::endl;
+			smt::error("Data size not supported by NIfTI-1 format.");
 			std::exit(EXIT_FAILURE);
 		}
 		_header.dim[1] = s0;
@@ -1289,14 +1289,14 @@ private:
 			_fout = nullptr;
 			_mmapped = false;
 #else
-			std::cerr << "ERROR: Built without support for gzip format." << std::endl;
+			smt::error("Built without support for gzip format.");
 			std::exit(EXIT_FAILURE);
 #endif // ZLIB_FOUND
 		} else {
 			if(_separate_storage) {
 				_fout = fopen(_imgname.c_str(), "wb");
 				if(_fout == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _imgname << "." << std::endl;
+					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				unsigned char* tmp = nullptr;
@@ -1308,7 +1308,7 @@ private:
 			} else {
 				_fout = (_hdrname == "-")? ::stdout : std::fopen(_hdrname.c_str(), "wb");
 				if(_fout == nullptr) {
-					std::cerr << "ERROR: Unable to open " << _hdrname << "." << std::endl;
+					smt::error("Unable to open ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
 				unsigned char* tmp = nullptr;

@@ -49,6 +49,16 @@ bool debug() {
 
 } // (anonymous)
 
+void error_impl(const std::string& s, const std::string& file, const long int& line, const std::string& function) {
+	if(debug()) {
+		std::cerr << smt::colour::red << "*** ERROR: " << file << ":" << line << ": In function ‘" << function << "’: " << s << smt::colour::reset << std::endl;
+	} else {
+		std::cerr << smt::colour::red << "*** ERROR: " << s << smt::colour::reset << std::endl;
+	}
+}
+
+#define error(s) error_impl((s), __FILE__, __LINE__, __PRETTY_FUNCTION__)
+
 #ifdef NDEBUG
 void assert_noimpl() {}
 

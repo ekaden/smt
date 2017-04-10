@@ -32,10 +32,11 @@
 #include "docopt.h"
 
 #include "darray.h"
+#include "debug.h"
 #include "fmt.h"
+#include "gaussianfit.h"
 #include "nifti.h"
 #include "progress.h"
-#include "gaussianfit.h"
 #include "sarray.h"
 #include "version.h"
 
@@ -108,29 +109,29 @@ int main(int argc, const char** argv) {
 
 	const smt::inifti<float_t, 4> input(args["<input>"].asString());
 	if(input.size(3) < 2) {
-		std::cerr << "ERROR: '" << args["<input>"].asString() << "' includes less than two volumes." << std::endl;
+		smt::error("‘" + args["<input>"].asString() + "’ includes less than two volumes.");
 		return EXIT_FAILURE;
 	}
 
 	const smt::inifti<float_t, 3> mask = read_mask<float_t>(args);
 	if(mask) {
 		if(input.size(0) != mask.size(0) || input.size(1) != mask.size(1) || input.size(2) != mask.size(2)) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(input.pixsize(0) != mask.pixsize(0) || input.pixsize(1) != mask.pixsize(1) || input.pixsize(2) != mask.pixsize(2)) {
-			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("The pixel sizes of ‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(! input.has_equal_spatial_coords(mask)) {
-			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("The coordinate systems of ‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 	}
 
 	const int split = smt::is_format_string(args["<output>"].asString());
 	if(split < 0) {
-		std::cerr << "ERROR: " << args["<output>"].asString() << " is malformed." << std::endl;
+		smt::error("‘" + args["<output>"].asString() + "’ is malformed.");
 		return EXIT_FAILURE;
 	}
 

@@ -108,7 +108,7 @@ smt::diffenc<float_t> read_diffenc(std::map<std::string, docopt::value>& args) {
 	} else if(!args["--bvals"] && !args["--bvecs"] && args["--grads"]) {
 		return smt::diffenc<float_t>(args["--grads"].asString());
 	} else {
-		std::cerr << "ERROR: Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required." << std::endl;
+		smt::error("Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required.");
 		std::exit(EXIT_FAILURE);
 	}
 }
@@ -152,7 +152,7 @@ float_t read_maxdiff(std::map<std::string, docopt::value>& args) {
 		std::istringstream sin(args["--maxdiff"].asString());
 		float_t maxdiff;
 		if(! (sin >> maxdiff)) {
-			std::cerr << "ERROR: Unable to parse '" << args["--maxdiff"].asString() << "'." << std::endl;
+			smt::error("Unable to parse ‘" + args["--maxdiff"].asString() + "’.");
 			std::exit(EXIT_FAILURE);
 		} else {
 			return maxdiff;
@@ -196,11 +196,11 @@ int main(int argc, const char** argv) {
 	const smt::diffenc<float_t> dw = read_diffenc<float_t>(args);
 	if(input.size(3) != dw.mapping.size(0)) {
 		if(args["--bvals"] && args["--bvecs"] && !args["--grads"]) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--bvals"].asString() << "' and/or '" << args["--bvecs"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--bvals"].asString() + "’ and/or ‘" + args["--bvecs"].asString() + "’ do not match.");
 		} else if(!args["--bvals"] && !args["--bvecs"] && args["--grads"]) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--grads"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--grads"].asString() + "’ do not match.");
 		} else {
-			std::cerr << "ERROR: Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required." << std::endl;
+			smt::error("Either --bvals <bvals>, --bvecs <bvecs> or --grads <grads> are required.");
 		}
 		return EXIT_FAILURE;
 	}
@@ -208,19 +208,19 @@ int main(int argc, const char** argv) {
 	const smt::inifti<float_t, 4> graddev = read_graddev<float_t>(args);
 	if(graddev) {
 		if(input.size(0) != graddev.size(0) || input.size(1) != graddev.size(1) || input.size(2) != graddev.size(2)) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--graddev"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(graddev.size(3) != 9) {
-			std::cerr << "ERROR: '" << args["--graddev"].asString() << "' does not contain nine volumes." << std::endl;
+			smt::error("‘" + args["--graddev"].asString() + "’ does not contain nine volumes.");
 			return EXIT_FAILURE;
 		}
 		if(input.pixsize(0) != graddev.pixsize(0) || input.pixsize(1) != graddev.pixsize(1) || input.pixsize(2) != graddev.pixsize(2)) {
-			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
+			smt::error("The pixel sizes of ‘" + args["<input>"].asString() + "’ and ‘" + args["--graddev"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(! input.has_equal_spatial_coords(graddev)) {
-			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--graddev"].asString() << "' do not match." << std::endl;
+			smt::error("The coordinate systems of ‘" + args["<input>"].asString() + "’ and ‘" + args["--graddev"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 	}
@@ -228,15 +228,15 @@ int main(int argc, const char** argv) {
 	const smt::inifti<float_t, 3> mask = read_mask<float_t>(args);
 	if(mask) {
 		if(input.size(0) != mask.size(0) || input.size(1) != mask.size(1) || input.size(2) != mask.size(2)) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(input.pixsize(0) != mask.pixsize(0) || input.pixsize(1) != mask.pixsize(1) || input.pixsize(2) != mask.pixsize(2)) {
-			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("The pixel sizes of ‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(! input.has_equal_spatial_coords(mask)) {
-			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--mask"].asString() << "' do not match." << std::endl;
+			smt::error("The coordinate systems of ‘" + args["<input>"].asString() + "’ and ‘" + args["--mask"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 	}
@@ -244,15 +244,15 @@ int main(int argc, const char** argv) {
 	const std::tuple<float_t, smt::inifti<float_t, 3>> rician = read_rician<float_t>(args);
 	if(std::get<1>(rician)) {
 		if(input.size(0) != std::get<1>(rician).size(0) || input.size(1) != std::get<1>(rician).size(1) || input.size(2) != std::get<1>(rician).size(2)) {
-			std::cerr << "ERROR: '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			smt::error("‘" + args["<input>"].asString() + "’ and ‘" + args["--rician"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(input.pixsize(0) != std::get<1>(rician).pixsize(0) || input.pixsize(1) != std::get<1>(rician).pixsize(1) || input.pixsize(2) != std::get<1>(rician).pixsize(2)) {
-			std::cerr << "ERROR: The pixel sizes of '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			smt::error("The pixel sizes of ‘" + args["<input>"].asString() + "’ and ‘" + args["--rician"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 		if(! input.has_equal_spatial_coords(std::get<1>(rician))) {
-			std::cerr << "ERROR: The coordinate systems of '" << args["<input>"].asString() << "' and '" << args["--rician"].asString() << "' do not match." << std::endl;
+			smt::error("The coordinate systems of ‘" + args["<input>"].asString() + "’ and ‘" + args["--rician"].asString() + "’ do not match.");
 			return EXIT_FAILURE;
 		}
 	}
@@ -263,7 +263,7 @@ int main(int argc, const char** argv) {
 
 	const int split = smt::is_format_string(args["<output>"].asString());
 	if(split < 0) {
-		std::cerr << "ERROR: " << args["<output>"].asString() << " is malformed." << std::endl;
+		smt::error("‘" + args["<output>"].asString() + "’ is malformed.");
 		std::exit(EXIT_FAILURE);
 	}
 

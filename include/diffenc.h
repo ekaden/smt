@@ -42,6 +42,7 @@
 #include <tuple>
 
 #include "darray.h"
+#include "debug.h"
 #include "sarray.h"
 
 namespace smt {
@@ -59,11 +60,11 @@ public:
 		diffenc(diffenc_fsl(filename_bvals, filename_bvecs)) {
 
 		if(! has_nonnegative_bvalues()) {
-			std::cerr << "ERROR: '" << filename_bvals << "' has diffusion weighting factors which are not non-negative."  << std::endl;
+			smt::error("‘" + filename_bvals + "’ has diffusion weighting factors which are not non-negative.");
 			std::exit(EXIT_FAILURE);
 		}
 		if(! has_normalised_gradients(100*std::numeric_limits<float>::epsilon())) {
-			std::cerr << "ERROR: '" << filename_bvecs << "' has diffusion gradient directions which are not normalised."  << std::endl;
+			smt::error("‘" + filename_bvecs + "’ has diffusion gradient directions which are not normalised.");
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -72,11 +73,11 @@ public:
 		diffenc(diffenc_mrtrix(filename)) {
 
 		if(! has_nonnegative_bvalues()) {
-			std::cerr << "ERROR: '" << filename << "' has diffusion weighting factors which are not non-negative."  << std::endl;
+			smt::error("‘" + filename + "’ has diffusion weighting factors which are not non-negative.");
 			std::exit(EXIT_FAILURE);
 		}
-		if(! has_normalised_gradients(100*std::numeric_limits<float>::epsilon())) {
-			std::cerr << "ERROR: '" << filename << "' has diffusion gradient directions which are not normalised."  << std::endl;
+		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+			smt::error("‘" + filename + "’ has diffusion gradient directions which are not normalised.");
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -115,7 +116,7 @@ private:
 			gradients_(ii)(2) = buf_bvecs[2][ii];
 		}
 		if(bvalues_.size(0) != gradients_.size(0)) {
-			std::cerr << "ERROR: '" << filename_bvals << "' and '" << filename_bvecs << "' do not match." << std::endl;
+			smt::error("‘" + filename_bvals + "’ and ‘" + filename_bvecs + "’ do not match.");
 			std::exit(EXIT_FAILURE);
 		}
 		smt::darray<std::size_t, 1> mapping_(bvalues_.size(0));
@@ -179,7 +180,7 @@ private:
 			}
 			fin.close();
 		} else {
-			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
+			smt::error("Unable to read ‘" + filename + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 
@@ -202,7 +203,7 @@ private:
 			}
 			fin.close();
 		} else {
-			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
+			smt::error("Unable to read ‘" + filename + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 
@@ -229,7 +230,7 @@ private:
 			}
 			fin.close();
 		} else {
-			std::cerr << "ERROR: Unable to read '" << filename << "'." << std::endl;
+			smt::error("Unable to read ‘" + filename + "’.");
 			std::exit(EXIT_FAILURE);
 		}
 
