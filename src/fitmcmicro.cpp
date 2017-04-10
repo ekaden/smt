@@ -30,14 +30,13 @@
 #include <sstream>
 #include <string>
 
-#include "docopt.h"
-
 #include "darray.h"
 #include "debug.h"
 #include "diffenc.h"
 #include "fitmcmicro.h"
 #include "fmt.h"
 #include "nifti.h"
+#include "opts.h"
 #include "progress.h"
 #include "ricedebias.h"
 #include "sarray.h"
@@ -185,7 +184,7 @@ int main(int argc, const char** argv) {
 
 	// Input
 
-	std::map<std::string, docopt::value> args = docopt::docopt(USAGE, {argv+1, argv+argc}, true, VERSION);
+	std::map<std::string, docopt::value> args = smt::docopt(USAGE, {argv+1, argv+argc}, true, VERSION);
 	if(args["--license"].asBool()) {
 		std::cout << LICENSE << std::endl;
 		return EXIT_SUCCESS;
