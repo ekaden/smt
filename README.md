@@ -74,9 +74,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 ### Environment variables
 
-* `SMT_DEBUG=<true | positive integer` -- Debug information
+* `SMT_DEBUG=<true | positive integer` –– Debug information
 
-* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` -- Suppress colour output
+* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
 * `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
@@ -133,9 +133,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 ### Environment variables
 
-* `SMT_DEBUG=<true | positive integer` -- Debug information
+* `SMT_DEBUG=<true | positive integer` –– Debug information
 
-* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` -- Suppress colour output
+* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
 * `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
@@ -191,9 +191,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 ### Environment variables
 
-* `SMT_DEBUG=<true | positive integer` -- Debug information
+* `SMT_DEBUG=<true | positive integer` –– Debug information
 
-* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` -- Suppress colour output
+* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
 * `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
