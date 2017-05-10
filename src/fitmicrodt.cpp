@@ -29,6 +29,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 #include "darray.h"
 #include "debug.h"
