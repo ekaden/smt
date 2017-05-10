@@ -493,14 +493,20 @@ std::tuple<bool, bool, std::string, std::string> niftiname(const std::string& fi
 	}
 }
 
+template <typename float_t>
+bool approximately_equal(const float_t& a, const float_t& b);
+
+template <>
 bool approximately_equal(const float& a, const float& b) {
 	return std::abs(a-b) <= 100*std::numeric_limits<float>::epsilon()*std::max(std::abs(a), std::abs(b));
 }
 
+template <>
 bool approximately_equal(const double& a, const double& b) {
 	return std::abs(a-b) <= 100*std::numeric_limits<double>::epsilon()*std::max(std::abs(a), std::abs(b));
 }
 
+template <>
 bool approximately_equal(const long double& a, const long double& b) {
 	return std::abs(a-b) <= 100*std::numeric_limits<long double>::epsilon()*std::max(std::abs(a), std::abs(b));
 }
@@ -620,9 +626,9 @@ public:
 				&& smt::approximately_equal(_header.qoffset_x, like._header.qoffset_x)
 				&& smt::approximately_equal(_header.qoffset_y, like._header.qoffset_y)
 				&& smt::approximately_equal(_header.qoffset_z, like._header.qoffset_z)
-				&& std::equal(std::begin(_header.srow_x), std::end(_header.srow_x), std::begin(like._header.srow_x), smt::approximately_equal)
-				&& std::equal(std::begin(_header.srow_y), std::end(_header.srow_y), std::begin(like._header.srow_y), smt::approximately_equal)
-				&& std::equal(std::begin(_header.srow_z), std::end(_header.srow_z), std::begin(like._header.srow_z), smt::approximately_equal)) {
+				&& std::equal(std::begin(_header.srow_x), std::end(_header.srow_x), std::begin(like._header.srow_x), smt::approximately_equal<float>)
+				&& std::equal(std::begin(_header.srow_y), std::end(_header.srow_y), std::begin(like._header.srow_y), smt::approximately_equal<float>)
+				&& std::equal(std::begin(_header.srow_z), std::end(_header.srow_z), std::begin(like._header.srow_z), smt::approximately_equal<float>)) {
 			return true;
 		} else {
 			return false;
