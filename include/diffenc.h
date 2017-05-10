@@ -76,7 +76,7 @@ public:
 			smt::error("‘" + filename + "’ has diffusion weighting factors which are not non-negative.");
 			std::exit(EXIT_FAILURE);
 		}
-		if(! has_normalised_gradients(10*std::numeric_limits<float>::epsilon())) {
+		if(! has_normalised_gradients(100*std::numeric_limits<float>::epsilon())) {
 			smt::error("‘" + filename + "’ has diffusion gradient directions which are not normalised.");
 			std::exit(EXIT_FAILURE);
 		}

@@ -36,6 +36,7 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -492,6 +493,18 @@ std::tuple<bool, bool, std::string, std::string> niftiname(const std::string& fi
 	}
 }
 
+bool approximately_equal(const float& a, const float& b) {
+	return std::abs(a-b) <= 100*std::numeric_limits<float>::epsilon()*std::max(std::abs(a), std::abs(b));
+}
+
+bool approximately_equal(const double& a, const double& b) {
+	return std::abs(a-b) <= 100*std::numeric_limits<double>::epsilon()*std::max(std::abs(a), std::abs(b));
+}
+
+bool approximately_equal(const long double& a, const long double& b) {
+	return std::abs(a-b) <= 100*std::numeric_limits<long double>::epsilon()*std::max(std::abs(a), std::abs(b));
+}
+
 } // (anonymous)
 
 template <typename T, unsigned int D>
@@ -601,15 +614,15 @@ public:
 		if(_header.pixdim[0] == like._header.pixdim[0]
 				&& _header.qform_code == like._header.qform_code
 				&& _header.sform_code == like._header.sform_code
-				&& _header.quatern_b == like._header.quatern_b
-				&& _header.quatern_c == like._header.quatern_c
-				&& _header.quatern_d == like._header.quatern_d
-				&& _header.qoffset_x == like._header.qoffset_x
-				&& _header.qoffset_y == like._header.qoffset_y
-				&& _header.qoffset_z == like._header.qoffset_z
-				&& std::equal(std::begin(_header.srow_x), std::end(_header.srow_x), std::begin(like._header.srow_x))
-				&& std::equal(std::begin(_header.srow_y), std::end(_header.srow_y), std::begin(like._header.srow_y))
-				&& std::equal(std::begin(_header.srow_z), std::end(_header.srow_z), std::begin(like._header.srow_z))) {
+				&& smt::approximately_equal(_header.quatern_b, like._header.quatern_b)
+				&& smt::approximately_equal(_header.quatern_c, like._header.quatern_c)
+				&& smt::approximately_equal(_header.quatern_d, like._header.quatern_d)
+				&& smt::approximately_equal(_header.qoffset_x, like._header.qoffset_x)
+				&& smt::approximately_equal(_header.qoffset_y, like._header.qoffset_y)
+				&& smt::approximately_equal(_header.qoffset_z, like._header.qoffset_z)
+				&& std::equal(std::begin(_header.srow_x), std::end(_header.srow_x), std::begin(like._header.srow_x), smt::approximately_equal)
+				&& std::equal(std::begin(_header.srow_y), std::end(_header.srow_y), std::begin(like._header.srow_y), smt::approximately_equal)
+				&& std::equal(std::begin(_header.srow_z), std::end(_header.srow_z), std::begin(like._header.srow_z), smt::approximately_equal)) {
 			return true;
 		} else {
 			return false;
