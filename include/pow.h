@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Enrico Kaden & University College London
+// Copyright (c) 2016-2017 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,27 @@
 #ifndef _POW_H
 #define _POW_H
 
+#include <cmath>
+#include <type_traits>
+
 namespace smt {
 
+float pow2(float arg) {
+	return arg*arg;
+}
+
+double pow2(double arg) {
+	return arg*arg;
+}
+
+long double pow2(long double arg) {
+	return arg*arg;
+}
+
 template <typename T>
-T pow2(const T& x) {
-	return x*x;
+typename std::enable_if<std::is_integral<T>::value, double>::value pow2(T arg) {
+	const double tmp = arg;
+	return tmp*tmp;
 }
 
 } // smt
