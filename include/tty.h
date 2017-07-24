@@ -80,6 +80,13 @@ std::ostream& reset(std::ostream& s) {
 	return s;
 }
 
+std::ostream& bold(std::ostream& s) {
+	if(colour()) {
+		s << "\033[1m";
+	}
+	return s;
+}
+
 std::ostream& black(std::ostream& s) {
 	if(colour()) {
 		s << "\033[30m";

@@ -51,9 +51,9 @@ bool debug() {
 
 void error_impl(const std::string& s, const std::string& file, const long int& line, const std::string& function) {
 	if(debug()) {
-		std::cerr << smt::colour::red << "*** ERROR: " << file << ":" << line << ": In function ‘" << function << "’: " << s << smt::colour::reset << std::endl;
+		std::cerr << smt::colour::bold << smt::colour::red << "*** ERROR: " << smt::colour::reset << smt::colour::red << file << ":" << line << ": In function ‘" << function << "’: " << smt::colour::reset << smt::colour::bold << smt::colour::red << s << smt::colour::reset << std::endl;
 	} else {
-		std::cerr << smt::colour::red << "*** ERROR: " << s << smt::colour::reset << std::endl;
+		std::cerr << smt::colour::bold << smt::colour::red << "*** ERROR: " << s << smt::colour::reset << std::endl;
 	}
 }
 
@@ -69,7 +69,7 @@ void assert_impl(const bool& test, const std::string& s, const std::string& file
 #ifdef mex_h
 		mexPrintAssertion(s.c_str(), file.c_str(), line.c_str(), nullptr);
 #else
-		std::cerr << smt::colour::red << "*** ERROR: " << file << ":" << line << ": In function ‘" << function << "’: Assertion ‘" << s << "’ failed." << smt::colour::reset << std::endl;
+		std::cerr << smt::colour::bold << smt::colour::red << "*** ERROR: " << smt::colour::reset << smt::colour::red << file << ":" << line << ": In function ‘" << function << "’: " << smt::colour::reset << smt::colour::bold << smt::colour::red << "Assertion ‘" << s << "’ failed." << smt::colour::reset << std::endl;
 		std::exit(EXIT_FAILURE);
 #endif // mex_h
 	}
