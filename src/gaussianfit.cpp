@@ -29,12 +29,14 @@
 #include <map>
 #include <string>
 
+#include "cartesianrange.h"
 #include "darray.h"
 #include "debug.h"
 #include "fmt.h"
 #include "gaussianfit.h"
 #include "nifti.h"
 #include "opts.h"
+#include "parfor.h"
 #include "progress.h"
 #include "sarray.h"
 #include "version.h"
@@ -140,38 +142,33 @@ int main(int argc, const char** argv) {
 	smt::onifti<float, 3> output_std = (split > 0)? smt::onifti<float, 3>(smt::format_string(args["<output>"].asString(), "std"), input, input.size(0), input.size(1), input.size(2)) : smt::onifti<float, 3>();
 	smt::onifti<float, 4> output = (split > 0)? smt::onifti<float, 4>() : smt::onifti<float, 4>(smt::format_string(args["<output>"].asString()), input, input.size(0), input.size(1), input.size(2), 2);
 
-	const std::size_t input_size_0 = input.size(0);
-	const std::size_t input_size_1 = input.size(1);
-	const std::size_t input_size_2 = input.size(2);
-	smt::progress p{input_size_0*input_size_1*input_size_2, "gaussianfit"};
-#pragma omp parallel for schedule(dynamic, 10) collapse(3)
-	for(std::size_t kk = 0; kk < input_size_2; ++kk) {
-		for(std::size_t jj = 0; jj < input_size_1; ++jj) {
-			for(std::size_t ii = 0; ii < input_size_0; ++ii) {
-				if((! mask) || mask(ii, jj, kk) > 0) {
-					smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
+	const unsigned int nthreads = smt::threads();
+	const std::size_t chunk = 10;
 
-					const smt::sarray<float_t, 2> fit = smt::gaussianfit(input_tmp);
-					if(split > 0) {
-						output_mean(ii, jj, kk) = fit(0);
-						output_std(ii, jj, kk) = fit(1);
-					} else {
-						output(ii, jj, kk, 0) = fit(0);
-						output(ii, jj, kk, 1) = fit(1);
-					}
-				} else {
-					if(split > 0) {
-						output_mean(ii, jj, kk) = 0;
-						output_std(ii, jj, kk) = 0;
-					} else {
-						output(ii, jj, kk, 0) = 0;
-						output(ii, jj, kk, 1) = 0;
-					}
-				}
-				++p;
+	smt::progress p{input.size(0)*input.size(1)*input.size(2), nthreads, "gaussianfit"};
+	smt::parfor(smt::cartesianrange<3>(input.size(2), input.size(1), input.size(0)), [&](const std::size_t kk, const std::size_t jj, const std::size_t ii, const unsigned int tt = 0) {
+		if((! mask) || mask(ii, jj, kk) > 0) {
+			smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
+
+			const smt::sarray<float_t, 2> fit = smt::gaussianfit(input_tmp);
+			if(split > 0) {
+				output_mean(ii, jj, kk) = fit(0);
+				output_std(ii, jj, kk) = fit(1);
+			} else {
+				output(ii, jj, kk, 0) = fit(0);
+				output(ii, jj, kk, 1) = fit(1);
+			}
+		} else {
+			if(split > 0) {
+				output_mean(ii, jj, kk) = 0;
+				output_std(ii, jj, kk) = 0;
+			} else {
+				output(ii, jj, kk, 0) = 0;
+				output(ii, jj, kk, 1) = 0;
 			}
 		}
-	}
+		p.increment(tt);
+	}, nthreads, chunk);
 
 	return EXIT_SUCCESS;
 }

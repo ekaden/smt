@@ -38,10 +38,6 @@
 #include <string>
 #include <thread>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 #include "darray.h"
 #include "env.h"
 
@@ -49,20 +45,16 @@ namespace smt {
 
 class progress {
 public:
-	progress(const unsigned long int& n, const std::string& name = "Progress"):
-		_delay(100l),
+	progress(const unsigned long int& n, const unsigned int& nthreads = 1, const std::string& name = "Progress"):
+		_delay(50l),
 		_n(n),
 		_name(name),
-		_i(init_i()),
+		_i(init(nthreads)),
 		_t(verbose()? std::thread{&progress::run, this} : std::thread{}) {
 	}
 
-	void operator++() {
-#ifdef _OPENMP
-		++_i(omp_get_thread_num());
-#else
-		++_i(0);
-#endif
+	void increment(const unsigned int& tt = 0) {
+		++_i(tt);
 	}
 
 	~progress() {
@@ -78,12 +70,8 @@ private:
 	smt::darray<unsigned long int, 1u> _i;
 	std::thread _t;
 
-	smt::darray<unsigned long int, 1u> init_i() const {
-#ifdef _OPENMP
-		smt::darray<unsigned long int, 1u> i{static_cast<unsigned int>(std::max(omp_get_max_threads(), 1))};
-#else
-		smt::darray<unsigned long int, 1u> i{1u};
-#endif
+	smt::darray<unsigned long int, 1u> init(const unsigned int& nthreads) const {
+		smt::darray<unsigned long int, 1u> i{nthreads};
 		i = 0ul;
 
 		return i;
@@ -98,18 +86,19 @@ private:
 			std::cerr << std::string(_name, 0ul, 18ul) << ' ' << std::string(20ul-std::min(_name.length(), 18ul), '.') << " [";
 			for(unsigned int ii = 0u; ii < 50u; ++ii) {
 				if(ii < pos) {
-					std::cerr << "=";
+					std::cerr << '=';
 				} else if(ii == pos) {
-					std::cerr << ">";
+					std::cerr << '>';
 				} else {
-					std::cerr << " ";
+					std::cerr << ' ';
 				}
 			}
-			std::cerr << "] " << std::setw(3) << std::floor(100.0f*prgs) << "%\r";
+			std::cerr << "] " << std::setw(3) << std::floor(100.0f*prgs) << '%';
 
 			if(sum_i < _n) {
 				std::cerr.flush();
 				std::this_thread::sleep_for(std::chrono::milliseconds(_delay));
+				std::cerr << '\r';
 			} else {
 				std::cerr << std::endl;
 				std::cerr.flush();

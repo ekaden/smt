@@ -31,6 +31,7 @@
 #include <string>
 #include <tuple>
 
+#include "cartesianrange.h"
 #include "darray.h"
 #include "debug.h"
 #include "diffenc.h"
@@ -38,6 +39,7 @@
 #include "fmt.h"
 #include "nifti.h"
 #include "opts.h"
+#include "parfor.h"
 #include "progress.h"
 #include "ricedebias.h"
 #include "sarray.h"
@@ -285,68 +287,63 @@ int main(int argc, const char** argv) {
 		output_md.cal(0, maxdiff);
 	}
 
-	const std::size_t input_size_0 = input.size(0);
-	const std::size_t input_size_1 = input.size(1);
-	const std::size_t input_size_2 = input.size(2);
-	smt::progress p{input_size_0*input_size_1*input_size_2, "fitmicrodt"};
-#pragma omp parallel for schedule(dynamic, 10) collapse(3)
-	for(std::size_t kk = 0; kk < input_size_2; ++kk) {
-		for(std::size_t jj = 0; jj < input_size_1; ++jj) {
-			for(std::size_t ii = 0; ii < input_size_0; ++ii) {
-				if((! mask) || mask(ii, jj, kk) > 0) {
-					smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
-					if(std::get<1>(rician)) {
-						for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-							input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<1>(rician)(ii, jj, kk));
-						}
-					} else {
-						if(std::get<0>(rician) > float_t(0)) {
-							for(std::size_t ll = 0; ll < input.size(3); ++ll) {
-								input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<0>(rician));
-							}
-						}
-					}
+	const unsigned int nthreads = smt::threads();
+	const std::size_t chunk = 10;
 
-					const smt::diffenc<float_t> dw_tmp = (graddev)?
-							smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
-
-					const smt::sarray<float_t, 3> fit = smt::fitmicrodt(input_tmp, dw_tmp, maxdiff, b0);
-					if(split > 0) {
-						output_long(ii, jj, kk) = fit(0);
-						output_trans(ii, jj, kk) = fit(1);
-						output_fa(ii, jj, kk) = smt::microfa(fit(0), fit(1));
-						output_fapow3(ii, jj, kk) = std::pow(smt::microfa(fit(0), fit(1)), 3);
-						output_md(ii, jj, kk) = smt::micromd(fit(0), fit(1));
-						output_b0(ii, jj, kk) = fit(2);
-					} else {
-						output(ii, jj, kk, 0) = fit(0);
-						output(ii, jj, kk, 1) = fit(1);
-						output(ii, jj, kk, 2) = smt::microfa(fit(0), fit(1));
-						output(ii, jj, kk, 3) = std::pow(smt::microfa(fit(0), fit(1)), 3);
-						output(ii, jj, kk, 4) = smt::micromd(fit(0), fit(1));
-						output(ii, jj, kk, 5) = fit(2);
-					}
-				} else {
-					if(split > 0) {
-						output_long(ii, jj, kk) = 0;
-						output_trans(ii, jj, kk) = 0;
-						output_fa(ii, jj, kk) = 0;
-						output_fapow3(ii, jj, kk) = 0;
-						output_md(ii, jj, kk) = 0;
-						output_b0(ii, jj, kk) = 0;
-					} else {
-						output(ii, jj, kk, 0) = 0;
-						output(ii, jj, kk, 1) = 0;
-						output(ii, jj, kk, 2) = 0;
-						output(ii, jj, kk, 3) = 0;
-						output(ii, jj, kk, 4) = 0;
-						output(ii, jj, kk, 5) = 0;
+	smt::progress p{input.size(0)*input.size(1)*input.size(2), nthreads, "fitmicrodt"};
+	smt::parfor(smt::cartesianrange<3>(input.size(2), input.size(1), input.size(0)), [&](const std::size_t kk, const std::size_t jj, const std::size_t ii, const unsigned int tt = 0) {
+		if((! mask) || mask(ii, jj, kk) > 0) {
+			smt::darray<float_t, 1> input_tmp = input(ii, jj, kk, smt::slice(0, input.size(3)));
+			if(std::get<1>(rician)) {
+				for(std::size_t ll = 0; ll < input.size(3); ++ll) {
+					input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<1>(rician)(ii, jj, kk));
+				}
+			} else {
+				if(std::get<0>(rician) > float_t(0)) {
+					for(std::size_t ll = 0; ll < input.size(3); ++ll) {
+						input_tmp(ll) = smt::ricedebias(input_tmp(ll), std::get<0>(rician));
 					}
 				}
-				++p;
+			}
+
+			const smt::diffenc<float_t> dw_tmp = (graddev)?
+					smt::diffenc<float_t>(dw, reshape_graddev(graddev(ii, jj, kk, smt::slice(0, 9)))) : dw;
+
+			const smt::sarray<float_t, 3> fit = smt::fitmicrodt(input_tmp, dw_tmp, maxdiff, b0);
+			if(split > 0) {
+				output_long(ii, jj, kk) = fit(0);
+				output_trans(ii, jj, kk) = fit(1);
+				output_fa(ii, jj, kk) = smt::microfa(fit(0), fit(1));
+				output_fapow3(ii, jj, kk) = std::pow(smt::microfa(fit(0), fit(1)), 3);
+				output_md(ii, jj, kk) = smt::micromd(fit(0), fit(1));
+				output_b0(ii, jj, kk) = fit(2);
+			} else {
+				output(ii, jj, kk, 0) = fit(0);
+				output(ii, jj, kk, 1) = fit(1);
+				output(ii, jj, kk, 2) = smt::microfa(fit(0), fit(1));
+				output(ii, jj, kk, 3) = std::pow(smt::microfa(fit(0), fit(1)), 3);
+				output(ii, jj, kk, 4) = smt::micromd(fit(0), fit(1));
+				output(ii, jj, kk, 5) = fit(2);
+			}
+		} else {
+			if(split > 0) {
+				output_long(ii, jj, kk) = 0;
+				output_trans(ii, jj, kk) = 0;
+				output_fa(ii, jj, kk) = 0;
+				output_fapow3(ii, jj, kk) = 0;
+				output_md(ii, jj, kk) = 0;
+				output_b0(ii, jj, kk) = 0;
+			} else {
+				output(ii, jj, kk, 0) = 0;
+				output(ii, jj, kk, 1) = 0;
+				output(ii, jj, kk, 2) = 0;
+				output(ii, jj, kk, 3) = 0;
+				output(ii, jj, kk, 4) = 0;
+				output(ii, jj, kk, 5) = 0;
 			}
 		}
-	}
+		p.increment(tt);
+	}, nthreads, chunk);
 
 	return EXIT_SUCCESS;
 }

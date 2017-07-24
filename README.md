@@ -78,9 +78,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 * `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
-* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+* `SMT_NUM_THREADS=<positive integer>` –– Number of threads for parallel processing
 
-* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
 ## Microscopic diffusion tensor
 
@@ -137,9 +137,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 * `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
-* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+* `SMT_NUM_THREADS=<positive integer>` –– Number of threads for parallel processing
 
-* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
 ## Multi-compartment microscopic diffusion
 
@@ -195,9 +195,9 @@ If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the param
 
 * `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
 
-* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+* `SMT_NUM_THREADS=<positive integer>` –– Number of threads for parallel processing
 
-* `OMP_THREAD_LIMIT=<positive integer>` –– Maximum number of threads for parallel processing
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
 
 ## Citation
 
