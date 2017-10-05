@@ -1375,7 +1375,7 @@ private:
 		header.toffset = 0.0f;
 		header.glmax = 0; // unused
 		header.glmin = 0; // unused
-		std::strncpy(header.descrip, "SMT – https://ekaden.github.io", sizeof(header.descrip));
+		std::strncpy(header.descrip, "SMT - https://ekaden.github.io", sizeof(header.descrip));
 		if(_separate_storage) {
 			std::strncpy(header.magic, "ni1", sizeof(header.magic));
 		} else {
