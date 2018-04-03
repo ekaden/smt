@@ -99,16 +99,16 @@ include_directories("${PROJECT_SOURCE_DIR}/niftilib/include")
 add_library(docopt STATIC docopt.cpp/src/docopt.cpp)
 
 add_executable(gaussianfit src/gaussianfit.cpp)
-target_link_libraries(gaussianfit docopt)
+target_link_libraries(gaussianfit docopt ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(ricianfit src/ricianfit.cpp)
-target_link_libraries(ricianfit docopt)
+target_link_libraries(ricianfit docopt ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fitmicrodt src/fitmicrodt.cpp)
-target_link_libraries(fitmicrodt docopt)
+target_link_libraries(fitmicrodt docopt ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(fitmcmicro src/fitmcmicro.cpp)
-target_link_libraries(fitmcmicro docopt)
+target_link_libraries(fitmcmicro docopt ${CMAKE_THREAD_LIBS_INIT})
 
 if(ZLIB_FOUND)
 	target_link_libraries(gaussianfit ${ZLIB_LIBRARIES})
