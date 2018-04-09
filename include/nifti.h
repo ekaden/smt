@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2017 Enrico Kaden & University College London
+// Copyright (c) 2016-2018 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -410,15 +410,79 @@ int fileno(std::FILE* f) {
 }
 
 #ifdef ZLIB_FOUND
-std::ptrdiff_t gzskip(gzFile f, std::ptrdiff_t n) {
-	smt::darray<unsigned char, 1> buf(n);
-	return gzread(f, buf.begin(), n);
+std::size_t gzfread(void* buffer, std::size_t size, std::size_t count, gzFile stream) {
+	if(size == 0) {
+		return 0;
+	}
+	if(count == 0) {
+		return 0;
+	}
+	if(std::numeric_limits<std::size_t>::max()/size < count) {
+		return 0;
+	}
+	std::size_t ii = size*count;
+	std::size_t jj = 0;
+	while(ii > std::numeric_limits<int>::max()) {
+		const int kk = gzread(stream, buffer, std::numeric_limits<int>::max());
+		jj += kk;
+		if(kk != std::numeric_limits<int>::max()) {
+			return jj/size;
+		}
+		buffer = reinterpret_cast<unsigned char*>(buffer)+kk;
+		ii -= kk;
+	}
+	const int kk = gzread(stream, buffer, ii);
+	jj += kk;
+	// if(kk != ii) {
+	// 	return jj/size;
+	// }
+	// buffer = reinterpret_cast<unsigned char*>(buffer)+kk;
+	// ii -= kk;
+
+	return jj/size;
+}
+
+std::size_t gzfwrite(void const* buffer, std::size_t size, std::size_t count, gzFile stream) {
+	if(size == 0) {
+		return 0;
+	}
+	if(count == 0) {
+		return 0;
+	}
+	if(std::numeric_limits<std::size_t>::max()/size < count) {
+		return 0;
+	}
+	std::size_t ii = size*count;
+	std::size_t jj = 0;
+	while(ii > std::numeric_limits<int>::max()) {
+		const int kk = gzwrite(stream, buffer, std::numeric_limits<int>::max());
+		jj += kk;
+		if(kk != std::numeric_limits<int>::max()) {
+			return jj/size;
+		}
+		buffer = reinterpret_cast<unsigned char const*>(buffer)+kk;
+		ii -= kk;
+	}
+	const int kk = gzwrite(stream, buffer, ii);
+	jj += kk;
+	// if(kk != ii) {
+	// 	return jj/size;
+	// }
+	// buffer = reinterpret_cast<unsigned char const*>(buffer)+kk;
+	// ii -= kk;
+
+	return jj/size;
+}
+
+std::size_t gzfskip(gzFile stream, std::size_t offset) {
+	smt::darray<unsigned char, 1> buffer(offset);
+	return smt::gzfread(buffer.begin(), 1, offset, stream);
 }
 #endif // ZLIB_FOUND
 
-std::ptrdiff_t fskip(std::FILE* f, std::ptrdiff_t n) {
-	smt::darray<unsigned char, 1> buf(n);
-	return std::fread(buf.begin(), 1, n, f);
+std::size_t fskip(std::FILE* stream, std::size_t offset) {
+	smt::darray<unsigned char, 1> buffer(offset);
+	return std::fread(buffer.begin(), 1, offset, stream);
 }
 
 bool has_nifti_extension(const std::string& filename, const std::string& ext, const bool& icase = true) {
@@ -692,7 +756,7 @@ private:
 			smt::error("Unable to open ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
-		if(gzread(_zin, &_header, sizeof(nifti_1_header)) != sizeof(nifti_1_header)) {
+		if(smt::gzfread(&_header, sizeof(nifti_1_header), 1, _zin) != 1) {
 			smt::error("Unable to read ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
@@ -701,7 +765,7 @@ private:
 			smt::error("Unable to open ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
-		if(fread(&_header, sizeof(nifti_1_header), 1, _fin) != 1) {
+		if(std::fread(&_header, sizeof(nifti_1_header), 1, _fin) != 1) {
 			smt::error("Unable to read ‘" + _hdrname + "’.");
 			std::exit(EXIT_FAILURE);
 		}
@@ -745,7 +809,7 @@ private:
 					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
-				if(gzskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
+				if(smt::gzfskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -754,7 +818,7 @@ private:
 					smt::error("Unable to allocate memory.");
 					std::exit(EXIT_FAILURE);
 				}
-				if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
+				if(smt::gzfread(_data, bytesize(), size(), _zin) != size()) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -765,7 +829,7 @@ private:
 #endif // ZLIB_FOUND
 			} else {
 #ifdef ZLIB_FOUND
-				if(gzskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
+				if(smt::gzfskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -774,7 +838,7 @@ private:
 					smt::error("Unable to allocate memory.");
 					std::exit(EXIT_FAILURE);
 				}
-				if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
+				if(smt::gzfread(_data, bytesize(), size(), _zin) != size()) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -795,7 +859,7 @@ private:
 					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
-				if(gzskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
+				if(smt::gzfskip(_zin, std::max(0L, offset())) != std::max(0L, offset())) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -807,7 +871,7 @@ private:
 						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
+					if(smt::gzfread(_data, bytesize(), size(), _zin) != size()) {
 						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
@@ -817,11 +881,11 @@ private:
 					smt::error("Unable to close ‘" + _hdrname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
-				if((_fin = fopen(_imgname.c_str(), "rb")) == nullptr) {
+				if((_fin = std::fopen(_imgname.c_str(), "rb")) == nullptr) {
 					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
-				if(fskip(_fin, std::max(0L, offset())) != std::max(0L, offset())) {
+				if(smt::fskip(_fin, std::max(0L, offset())) != std::max(0L, offset())) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -841,7 +905,7 @@ private:
 #endif // ZLIB_FOUND
 			} else {
 #ifdef ZLIB_FOUND
-				if(gzskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
+				if(smt::gzfskip(_zin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -858,7 +922,7 @@ private:
 							smt::error("Unable to allocate memory.");
 							std::exit(EXIT_FAILURE);
 						}
-						if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
+						if(smt::gzfread(_data, bytesize(), size(), _zin) != size()) {
 							smt::error("Unable to read ‘" + _imgname + "’.");
 							std::exit(EXIT_FAILURE);
 						}
@@ -870,13 +934,13 @@ private:
 						smt::error("Unable to allocate memory.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzread(_zin, _data, bytesize()*size()) != bytesize()*size()) {
+					if(smt::gzfread(_data, bytesize(), size(), _zin) != size()) {
 						smt::error("Unable to read ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				}
 #else
-				if(fskip(_fin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
+				if(smt::fskip(_fin, std::max(352L, offset())-352L+4L) != std::max(352L, offset())-352L+4L) {
 					smt::error("Unable to read ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
 				}
@@ -1073,11 +1137,11 @@ public:
 						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_header), sizeof(_header)) != sizeof(_header)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1, zout) != 1) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender)) != sizeof(_extender)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1, zout) != 1) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
@@ -1091,7 +1155,7 @@ public:
 						smt::error("Unable to open ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(_data.begin()), _data.size()*sizeof(T)) != _data.size()*sizeof(T)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(_data.begin()), sizeof(T), _data.size(), zout) != _data.size()) {
 						smt::error("Unable to write ‘" + _imgname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
@@ -1110,16 +1174,16 @@ public:
 						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_header), sizeof(_header)) != sizeof(_header)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1, zout) != 1) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender)) != sizeof(_extender)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1, zout) != 1) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 
-					if(gzwrite(zout, reinterpret_cast<unsigned char*>(_data.begin()), _data.size()*sizeof(T)) != _data.size()*sizeof(T)) {
+					if(smt::gzfwrite(reinterpret_cast<unsigned char*>(_data.begin()), sizeof(T), _data.size(), zout) != _data.size()) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
@@ -1154,29 +1218,29 @@ public:
 						}
 					}
 
-					_fout = fopen(_hdrname.c_str(), "wb");
+					_fout = std::fopen(_hdrname.c_str(), "wb");
 					if(_fout == nullptr) {
 						smt::error("Unable to open ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
+					if(std::fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
+					if(std::fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(fclose(_fout) != 0) {
+					if(std::fclose(_fout) != 0) {
 						smt::error("Unable to close ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
 				} else {
-					if(fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
+					if(std::fwrite(reinterpret_cast<unsigned char*>(&_header), sizeof(_header), 1u, _fout) != 1u) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
-					if(fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
+					if(std::fwrite(reinterpret_cast<unsigned char*>(&_extender), sizeof(_extender), 1u, _fout) != 1u) {
 						smt::error("Unable to write ‘" + _hdrname + "’.");
 						std::exit(EXIT_FAILURE);
 					}
@@ -1250,7 +1314,7 @@ private:
 #endif // ZLIB_FOUND
 		} else {
 			if(_separate_storage) {
-				_fout = fopen(_imgname.c_str(), "wb");
+				_fout = std::fopen(_imgname.c_str(), "wb");
 				if(_fout == nullptr) {
 					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
@@ -1313,7 +1377,7 @@ private:
 #endif // ZLIB_FOUND
 		} else {
 			if(_separate_storage) {
-				_fout = fopen(_imgname.c_str(), "wb");
+				_fout = std::fopen(_imgname.c_str(), "wb");
 				if(_fout == nullptr) {
 					smt::error("Unable to open ‘" + _imgname + "’.");
 					std::exit(EXIT_FAILURE);
