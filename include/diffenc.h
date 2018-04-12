@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2017 Enrico Kaden & University College London
+// Copyright (c) 2016-2018 Enrico Kaden & University College London
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -115,6 +115,7 @@ private:
 			gradients_(ii)(1) = buf_bvecs[1][ii];
 			gradients_(ii)(2) = buf_bvecs[2][ii];
 		}
+		normalise_gradients(gradients_);
 		if(bvalues_.size(0) != gradients_.size(0)) {
 			smt::error("‘" + filename_bvals + "’ and ‘" + filename_bvecs + "’ do not match.");
 			std::exit(EXIT_FAILURE);
@@ -138,6 +139,7 @@ private:
 			gradients_(ii)(1) = buf[ii][1];
 			gradients_(ii)(2) = buf[ii][2];
 		}
+		normalise_gradients(gradients_);
 		smt::darray<std::size_t, 1> mapping_(bvalues_.size(0));
 		std::iota(std::begin(mapping_), std::end(mapping_), 0);
 
@@ -235,6 +237,15 @@ private:
 		}
 
 		return buf;
+	}
+
+	void normalise_gradients(smt::darray<smt::sarray<float_t, 3>, 1>& gradients) const {
+		std::for_each(std::begin(gradients), std::end(gradients), [](smt::sarray<float_t, 3>& gradient){
+			const float_t norm_pow2 = smt::dot(gradient, gradient);
+			if(norm_pow2 != float_t(0)) {
+				gradient /= std::sqrt(norm_pow2);
+			}
+		});
 	}
 
 	bool has_nonnegative_bvalues() const {
