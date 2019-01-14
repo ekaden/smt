@@ -4,14 +4,14 @@ The [Spherical Mean Technique (SMT)](http://dx.doi.org/10.1002/mrm.25734) is a c
 
 ## Installing
 
-Prebuilt SMT binaries are available for 64-bit Linux systems:
+Prebuilt SMT binaries are available for 64-bit Linux and macOS systems:
 * Download the latest [SMT release](https://github.com/ekaden/smt/releases/latest).
 * Unpack the software archive.
 * Set the path variable using `export PATH="/path/to/smt/bin:${PATH}"` (in bash) or `setenv PATH "/path/to/smt/bin:${PATH}"` (in csh).
 
 ## Building
 
-SMT requires the following software (tested under Ubuntu Linux 14.04 LTS):
+SMT requires the following software (tested under [Red Hat Enterprise Linux 6](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux/) and [Apple macOS Mojave 10.14](https://www.apple.com/macos/)):
 * [git](https://git-scm.com/) (version 1.9 or later)
 * [cmake](https://cmake.org/) (version 2.8 or later)
 * [GNU C/C++ compiler](https://gcc.gnu.org/) (version 4.9 or later), [Clang C/C++ compiler](http://clang.llvm.org/) (version 3.5 or later) or [Intel C/C++ compiler](https://software.intel.com/en-us/c-compilers/) (version 16.0 or later)
