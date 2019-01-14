@@ -41,7 +41,7 @@ make
 
 The SMT programs are located in the build directory.
 
-## Gaussian noise estimation
+## Gaussian noise estimation
 
 This utility software provides a voxelwise estimate of the Gaussian-distributed noise from, for example, a set of zero b-value images.
 
