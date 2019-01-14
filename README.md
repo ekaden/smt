@@ -41,6 +41,47 @@ make
 
 The SMT programs are located in the build directory.
 
+## Gaussian noise estimation
+
+This utility software provides a voxelwise estimate of the Gaussian-distributed noise from, for example, a set of zero b-value images.
+
+### Usage
+
+```
+gaussianfit [options] <input> <output>
+gaussianfit (-h | --help)
+gaussianfit --license
+gaussianfit --version
+```
+
+* `<input>` –– Input data set in NIfTI-1 format
+
+* `<output>` –– Output parameter maps in NIfTI-1 format, including:
+  1. Mean parameter (`mean`)
+  2. Standard deviation parameter (`std`)
+
+If the output name contains a placeholder `{}` (e.g. `output_{}.nii`), the parameter maps are written to separate files using the suffices given in parentheses. Otherwise the output parameter maps are stored in a single file.
+
+### Options
+
+* `--mask <mask>` –– Foreground mask [default: none]. Values greater than zero are considered as foreground.
+
+* `-h, --help` –– Help screen
+
+* `--license` –– License information
+
+* `--version` –– Software version
+
+### Environment variables
+
+* `SMT_DEBUG=<true | positive integer` –– Debug information
+
+* `SMT_NOCOLOUR=<true | positive integer` or `SMT_NOCOLOR=<true | positive integer` –– Suppress colour output
+
+* `SMT_NUM_THREADS=<positive integer>` –– Number of threads for parallel processing
+
+* `SMT_QUIET=<true | positive integer>` –– Verbosity (e.g. progress bar)
+
 ## Rician noise estimation
 
 This utility software provides a voxelwise estimate of the Rician-distributed noise from, for example, a set of zero b-value images.
